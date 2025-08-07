@@ -1,0 +1,102 @@
+import { withAuth } from "next-auth/middleware"
+import { NextResponse } from "next/server"
+import { rateLimit, securityHeaders, validateAPIRequest } from "./lib/security"
+
+export default withAuth(
+  async function middleware(req) {
+    const response = NextResponse.next()
+    
+    // Apply security headers to all responses
+    Object.entries(securityHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value)
+    })
+
+    // API route protection
+    if (req.nextUrl.pathname.startsWith('/api')) {
+      // Skip validation for health checks and webhooks
+      if (req.nextUrl.pathname === '/api/health' || 
+          req.nextUrl.pathname === '/api/stripe/webhooks') {
+        return response
+      }
+
+      // Validate API requests
+      const validation = await validateAPIRequest(req)
+      if (!validation.valid) {
+        return NextResponse.json(
+          { error: validation.error },
+          { status: validation.error === 'Too many requests' ? 429 : 400 }
+        )
+      }
+    }
+
+    const token = req.nextauth.token
+    const isAuth = !!token
+    const isAuthPage = req.nextUrl.pathname.startsWith('/auth')
+    const isDashboard = req.nextUrl.pathname.startsWith('/dashboard')
+    const isLesson = req.nextUrl.pathname.startsWith('/dashboard/lesson')
+    const isAdmin = req.nextUrl.pathname.startsWith('/admin')
+
+    // Redirect authenticated users away from auth pages
+    if (isAuthPage) {
+      if (isAuth) {
+        return NextResponse.redirect(new URL('/dashboard', req.url))
+      }
+      return response
+    }
+
+    // Protect dashboard routes
+    if (isDashboard) {
+      if (!isAuth) {
+        const callbackUrl = encodeURIComponent(req.nextUrl.pathname + req.nextUrl.search)
+        return NextResponse.redirect(
+          new URL(`/auth/signin?callbackUrl=${callbackUrl}`, req.url)
+        )
+      }
+
+      // Check subscription tier for lesson access
+      if (isLesson && token?.subscriptionTier === 'free') {
+        // For free tier, check if it's a free lesson
+        // This would require fetching lesson data, so for now we'll allow access
+        // and handle the restriction in the lesson component
+        return response
+      }
+
+      return response
+    }
+
+    // Protect admin routes (simple role check - extend as needed)
+    if (isAdmin) {
+      if (!isAuth) {
+        return NextResponse.redirect(new URL('/auth/signin', req.url))
+      }
+      
+      // Add admin role check here when implemented
+      // if (token?.role !== 'admin') {
+      //   return NextResponse.redirect(new URL('/dashboard', req.url))
+      // }
+      
+      return response
+    }
+
+    return response
+  },
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        // Return true to allow the middleware function to run
+        // Authorization logic is handled in the middleware function above
+        return true
+      },
+    },
+  }
+)
+
+export const config = {
+  matcher: [
+    '/dashboard/:path*',
+    '/auth/:path*',
+    '/admin/:path*',
+    // Exclude API routes, static files, and images
+    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+  ]
+}
