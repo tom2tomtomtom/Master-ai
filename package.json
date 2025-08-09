@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "prebuild": "prisma generate",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
@@ -36,7 +37,9 @@
     "test:components": "jest src/__tests__/components --verbose",
     "test:e2e": "jest src/__tests__/e2e --verbose --testTimeout=120000",
     "test:unit": "jest src/__tests__/lib --verbose",
-    "test:ci": "npm run test:critical && npm run test:coverage"
+    "test:ci": "npm run test:critical && npm run test:coverage",
+    "test:e2e:prod": "E2E_BASE_URL=$NEXTAUTH_URL playwright test",
+    "test:e2e:local": "E2E_BASE_URL=http://localhost:3000 playwright test"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -84,6 +87,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
     "@faker-js/faker": "^9.9.0",
+    "@playwright/test": "^1.54.2",
     "@testing-library/jest-dom": "^6.6.4",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
@@ -103,7 +107,7 @@
     "typescript": "^5.7.2"
   },
   "engines": {
-    "node": "18.x",
+    "node": "22.x",
     "npm": ">=10.0.0"
   }
 }

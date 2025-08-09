@@ -4,6 +4,9 @@ import { PrismaClient, UserRole } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Force dynamic rendering for admin routes
+export const dynamic = 'force-dynamic';
+
 // GET /api/admin/users - List all users (admin only)
 export async function GET(request: NextRequest) {
   try {

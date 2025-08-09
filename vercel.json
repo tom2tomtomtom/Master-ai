@@ -4,7 +4,7 @@
   "installCommand": "npm ci",
   "devCommand": "npm run dev",
   "framework": "nextjs",
-  "regions": ["iad1", "sfo1"],
+  "regions": ["iad1"],
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 30
@@ -22,7 +22,7 @@
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://your-domain.com"
+          "value": "https://www.master-ai-learn.com"
         },
         {
           "key": "Access-Control-Allow-Methods",
@@ -81,6 +81,14 @@
     }
   ],
   "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        { "type": "host", "value": "master-ai-learn.com" }
+      ],
+      "destination": "https://www.master-ai-learn.com/$1",
+      "permanent": true
+    },
     {
       "source": "/login",
       "destination": "/auth/signin",

@@ -1,0 +1,30 @@
+
+> master-ai-saas@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use, trying 3001 instead.
+ ⚠ Port 3001 is in use, trying 3002 instead.
+  ▲ Next.js 14.2.31
+  - Local:        http://localhost:3002
+  - Environments: .env.local, .env
+
+ ✓ Starting...
+ ⚠ Invalid next.config.mjs options detected: 
+ ⚠     Unrecognized key(s) in object: 'serverExternalPackages'
+ ⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+ ✓ Ready in 2.6s
+ ○ Compiling /api/lessons ...
+ ✓ Compiled /api/lessons in 585ms (104 modules)
+ GET /api/lessons?limit=5 200 in 1374ms
+ ✓ Compiled /api/lessons/[id] in 234ms (106 modules)
+ GET /api/lessons/cmdxqcoot0001wc4pco0ht9fx 200 in 1516ms
+ ○ Compiling /dashboard/lesson/[id] ...
+ ✓ Compiled /dashboard/lesson/[id] in 11.8s (2793 modules)
+ ✓ Compiled in 669ms (1033 modules)
+Disconnecting from database...
+prisma:info Starting a postgresql pool with 17 connections.
+prisma:query SELECT "public"."lessons"."id", "public"."lessons"."lessonNumber", "public"."lessons"."title", "public"."lessons"."description", "public"."lessons"."content", "public"."lessons"."videoUrl", "public"."lessons"."videoDuration", "public"."lessons"."estimatedTime", "public"."lessons"."difficultyLevel", "public"."lessons"."tools", "public"."lessons"."isPublished", "public"."lessons"."isFree", "public"."lessons"."createdAt", "public"."lessons"."updatedAt" FROM "public"."lessons" WHERE "public"."lessons"."id" IN ($1,$2) OFFSET $3
+prisma:query SELECT "public"."learning_path_lessons"."id", "public"."learning_path_lessons"."learningPathId", "public"."learning_path_lessons"."lessonId", "public"."learning_path_lessons"."order", "public"."learning_path_lessons"."isRequired" FROM "public"."learning_path_lessons" WHERE "public"."learning_path_lessons"."lessonId" IN ($1) ORDER BY "public"."learning_path_lessons"."order" ASC OFFSET $2
+prisma:query SELECT "public"."learning_paths"."id", "public"."learning_paths"."name", "public"."learning_paths"."description", "public"."learning_paths"."color", "public"."learning_paths"."icon" FROM "public"."learning_paths" WHERE "public"."learning_paths"."id" IN ($1) OFFSET $2
+ HEAD /dashboard/lesson/cmdxqcoot0001wc4pco0ht9fx 200 in 13119ms
+[?25h

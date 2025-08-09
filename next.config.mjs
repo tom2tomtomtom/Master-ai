@@ -1,9 +1,8 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   // External packages for server-side rendering
   serverExternalPackages: ['@prisma/client'],
-  
+
   // Ignore ESLint errors during build
   eslint: {
     ignoreDuringBuilds: true,
@@ -13,7 +12,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  
+
   // Webpack configuration to handle module loading issues
   webpack: (config, { isServer }) => {
     // Handle OpenTelemetry instrumentation issues
@@ -26,7 +25,7 @@ const nextConfig: NextConfig = {
         crypto: false,
       };
     }
-    
+
     // Ignore warnings for dynamic requires in Prisma/OpenTelemetry
     config.ignoreWarnings = [
       { module: /node_modules\/@prisma\/instrumentation/ },
@@ -35,7 +34,7 @@ const nextConfig: NextConfig = {
 
     return config;
   },
-  
+
   // Experimental features for better stability
   experimental: {
     // Enable server components optimization
@@ -44,3 +43,5 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+

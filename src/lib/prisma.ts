@@ -5,23 +5,22 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 /**
- * Enhanced Prisma client with production-optimized connection handling
+ * Production-optimized Prisma client with serverless configuration
  */
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
-  },
   log: process.env.NODE_ENV === 'development' 
     ? ['query', 'info', 'warn', 'error'] 
     : ['error'],
   errorFormat: 'pretty',
-  // Enhanced connection settings for serverless
+  // Optimized for serverless environments
   __internal: {
     engine: {
-      connectTimeout: 20000, // 20 seconds
-      acquireTimeout: 20000,
+      connectTimeout: 60000, // 60 seconds for serverless cold starts
+      acquireTimeout: 60000,
+      transactionOptions: {
+        maxWait: 60000, // Wait up to 60 seconds to start a transaction
+        timeout: 60000, // Allow up to 60 seconds for the transaction to complete
+      },
     },
   },
 })
@@ -34,13 +33,14 @@ let connectionRetries = 0
 const MAX_RETRIES = 3
 
 /**
- * Ensures database connection with retry logic
+ * Ensures database connection with enhanced retry logic for serverless
  */
 export async function ensureConnection(): Promise<boolean> {
   if (isConnected) return true
   
   try {
-    await prisma.$connect()
+    // Force a simple query to test connection
+    await prisma.$queryRaw`SELECT 1`
     isConnected = true
     connectionRetries = 0
     return true
@@ -49,12 +49,14 @@ export async function ensureConnection(): Promise<boolean> {
     console.error(`Database connection attempt ${connectionRetries}/${MAX_RETRIES} failed:`, error)
     
     if (connectionRetries < MAX_RETRIES) {
-      // Wait before retry with exponential backoff
-      const waitTime = Math.min(1000 * Math.pow(2, connectionRetries - 1), 10000)
+      // Progressive backoff: 2s, 5s, 10s
+      const waitTime = connectionRetries === 1 ? 2000 : connectionRetries === 2 ? 5000 : 10000
+      console.log(`Retrying connection in ${waitTime}ms...`)
       await new Promise(resolve => setTimeout(resolve, waitTime))
       return ensureConnection()
     }
     
+    console.error('All connection attempts failed. Using fallback mode.')
     return false
   }
 }
@@ -91,8 +93,29 @@ if (process.env.NODE_ENV !== 'production') {
   }
 }
 
-// Graceful shutdown handling
-process.on('beforeExit', async () => {
-  console.log('Disconnecting from database...')
-  await prisma.$disconnect()
-}) 
+// Enhanced connection management for serverless
+export async function disconnectPrisma() {
+  try {
+    await prisma.$disconnect()
+    isConnected = false
+    console.log('✅ Database disconnected gracefully')
+  } catch (error) {
+    console.error('Error disconnecting from database:', error)
+  }
+}
+
+// Connection health check
+export async function checkDatabaseHealth(): Promise<boolean> {
+  try {
+    await prisma.$queryRaw`SELECT version()` 
+    return true
+  } catch (error) {
+    console.error('Database health check failed:', error)
+    return false
+  }
+}
+
+// Graceful shutdown handling for serverless
+process.on('beforeExit', disconnectPrisma)
+process.on('SIGINT', disconnectPrisma)
+process.on('SIGTERM', disconnectPrisma) 
