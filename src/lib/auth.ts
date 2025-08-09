@@ -2,11 +2,15 @@ import { NextAuthOptions } from "next-auth"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
-import GitHubProvider from "next-auth/providers/github"
 import bcrypt from "bcryptjs"
 import { prisma } from "./prisma"
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
+  // debug logs only if enabled via env
+  debug: process.env.NEXTAUTH_DEBUG === 'true',
+  // Allow linking OAuth to existing email-based users (avoid duplicate email conflicts)
+  allowDangerousEmailAccountLinking: true,
   adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
@@ -54,24 +58,48 @@ export const authOptions: NextAuthOptions = {
         }
       }
     }),
-    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+    ...(process.env.GOOGLE_CLIENT_ID && 
+        process.env.GOOGLE_CLIENT_SECRET && 
+        process.env.GOOGLE_CLIENT_ID.trim() !== '' && 
+        process.env.GOOGLE_CLIENT_SECRET.trim() !== ''
       ? [
           GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          }),
-        ]
-      : []),
-    ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
-      ? [
-          GitHubProvider({
-            clientId: process.env.GITHUB_CLIENT_ID,
-            clientSecret: process.env.GITHUB_CLIENT_SECRET,
+            clientId: process.env.GOOGLE_CLIENT_ID.trim(),
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET.trim(),
           }),
         ]
       : []),
   ],
   callbacks: {
+    async signIn({ user, account, profile, email, credentials }) {
+      // Allow credentials-based sign in
+      if (account?.provider === "credentials") {
+        return true
+      }
+      
+      // For OAuth providers, ensure they're properly configured
+      if (account?.provider === "google") {
+        if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET ||
+            process.env.GOOGLE_CLIENT_ID.trim() === '' || 
+            process.env.GOOGLE_CLIENT_SECRET.trim() === '') {
+          console.error("Google OAuth attempted but credentials not properly configured")
+          return false
+        }
+      }
+      
+      
+      return true
+    },
+    async redirect({ url, baseUrl }) {
+      try {
+        if (url.startsWith('/')) return `${baseUrl}${url}`
+        const urlOrigin = new URL(url).origin
+        if (urlOrigin === baseUrl) return url
+      } catch (_) {
+        // fall through
+      }
+      return baseUrl
+    },
     async jwt({ token, user }) {
       // Initial sign in
       if (user) {
@@ -114,6 +142,32 @@ export const authOptions: NextAuthOptions = {
           subscriptionStatus: token.subscriptionStatus,
         },
       }
+    },
+  },
+  // Extra diagnostics in production to capture callback errors
+  events: {
+    async error(message) {
+      console.error("[next-auth][event.error]", message)
+    },
+    async signIn(message) {
+      console.log("[next-auth][event.signIn]", message?.user?.email || message)
+    },
+    async linkAccount(message) {
+      console.log("[next-auth][event.linkAccount]", message?.provider || message)
+    },
+    async createUser(message) {
+      console.log("[next-auth][event.createUser]", message?.user?.email || message)
+    },
+  },
+  logger: {
+    error(code, metadata) {
+      console.error("[next-auth][logger.error]", code, metadata)
+    },
+    warn(code) {
+      console.warn("[next-auth][logger.warn]", code)
+    },
+    debug(code, metadata) {
+      console.debug("[next-auth][logger.debug]", code, metadata)
     },
   },
 } 

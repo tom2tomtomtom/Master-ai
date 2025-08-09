@@ -21,6 +21,8 @@ function SignInContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
+  const [hasOAuthProviders, setHasOAuthProviders] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -45,6 +47,27 @@ function SignInContent() {
       setError(errorMessages[errorParam] || 'An error occurred during sign-in.');
     }
   }, [errorParam]);
+
+  // Check if OAuth providers are available
+  useEffect(() => {
+    async function checkOAuthProviders() {
+      try {
+        const response = await fetch('/api/auth/providers');
+        const data = await response.json();
+        
+        if (data.success) {
+          setHasOAuthProviders(data.providers.length > 0);
+        }
+      } catch (error) {
+        console.warn('Failed to check OAuth providers:', error);
+        setHasOAuthProviders(false);
+      } finally {
+        setOauthLoading(false);
+      }
+    }
+
+    checkOAuthProviders();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -123,22 +146,29 @@ function SignInContent() {
             )}
 
             {/* OAuth Buttons */}
-            <div className="space-y-3">
-              <OAuthButton provider="google" callbackUrl={callbackUrl} />
-              <OAuthButton provider="github" callbackUrl={callbackUrl} />
-            </div>
+            {oauthLoading ? (
+              <div className="space-y-3">
+                <div className="w-full h-10 bg-gray-100 animate-pulse rounded-md" />
+              </div>
+            ) : hasOAuthProviders ? (
+              <div className="space-y-3">
+                <OAuthButton provider="google" callbackUrl={callbackUrl} />
+              </div>
+            ) : null}
 
-            {/* Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+            {/* Divider - only show if OAuth providers are available */}
+            {(oauthLoading || (!oauthLoading && hasOAuthProviders)) && (
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    {oauthLoading ? 'Loading...' : 'Or continue with'}
+                  </span>
+                </div>
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
-                </span>
-              </div>
-            </div>
+            )}
 
             {/* Email/Password Form */}
             <form onSubmit={handleSubmit} className="space-y-4">

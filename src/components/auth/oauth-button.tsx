@@ -1,14 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
-import { Github } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { monitoring } from '@/lib/monitoring';
 
 interface OAuthButtonProps {
-  provider: 'google' | 'github';
+  provider: 'google';
   callbackUrl?: string;
   className?: string;
 }
@@ -39,34 +38,76 @@ const providerConfig = {
     bgColor: 'bg-white hover:bg-gray-50',
     textColor: 'text-gray-900',
     borderColor: 'border-gray-300'
-  },
-  github: {
-    name: 'GitHub',
-    icon: Github,
-    bgColor: 'bg-gray-900 hover:bg-gray-800',
-    textColor: 'text-white',
-    borderColor: 'border-gray-900'
   }
 };
 
 export function OAuthButton({ provider, callbackUrl, className }: OAuthButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isAvailable, setIsAvailable] = useState(false);
   const config = providerConfig[provider];
   const Icon = config.icon;
 
+  // Check if this provider is available on the server
+  useEffect(() => {
+    async function checkProviderAvailability() {
+      try {
+        const response = await fetch('/api/auth/providers');
+        const data = await response.json();
+        
+        if (data.success) {
+          const providerExists = data.providers.some(
+            (p: { id: string }) => p.id === provider
+          );
+          setIsAvailable(providerExists);
+        }
+      } catch (error) {
+        console.warn(`Failed to check ${provider} provider availability:`, error);
+        setIsAvailable(false);
+      }
+    }
+
+    checkProviderAvailability();
+  }, [provider]);
+
   const handleSignIn = async () => {
+    if (!isAvailable) return;
+    
     setIsLoading(true);
     try {
-      await signIn(provider, { callbackUrl: callbackUrl || '/dashboard' });
+      const result = await signIn(provider, { 
+        callbackUrl: callbackUrl || '/dashboard',
+        redirect: false
+      });
+      
+      if (result?.error) {
+        console.error(`${provider} OAuth error:`, result.error);
+        monitoring.logError('oauth_signin_error', result.error, {
+          provider,
+          callbackUrl,
+        });
+        // Redirect to signin with error
+        window.location.href = `/auth/signin?error=OAuthCallback&callbackUrl=${encodeURIComponent(callbackUrl || '/dashboard')}`;
+      } else if (result?.ok) {
+        // Success - redirect to callback URL
+        window.location.href = result.url || callbackUrl || '/dashboard';
+      }
     } catch (error) {
+      console.error(`${provider} OAuth error:`, error);
       monitoring.logError('oauth_signin_error', error, {
         provider,
         callbackUrl,
       });
+      // Redirect to signin with error
+      window.location.href = `/auth/signin?error=OAuthCallback&callbackUrl=${encodeURIComponent(callbackUrl || '/dashboard')}`;
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Don't render if provider is not available
+  if (!isAvailable) {
+    return null;
+  }
 
   return (
     <Button
