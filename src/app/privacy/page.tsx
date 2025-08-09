@@ -26,7 +26,7 @@ export default function PrivacyPage() {
           
           <div className="prose prose-lg max-w-none">
             <p className="text-gray-600 mb-8">
-              Last updated: {new Date().toLocaleDateString()}
+              Last updated: {new Date().toLocaleDateString()} - v2.0
             </p>
 
             <section className="mb-8">
