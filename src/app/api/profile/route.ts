@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -11,9 +10,9 @@ const updateProfileSchema = z.object({
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const authUser = await getAuthenticatedUser();
     
-    if (!session?.user?.id) {
+    if (!authUser) {
       return NextResponse.json(
         { error: 'Not authenticated' },
         { status: 401 }
@@ -21,7 +20,7 @@ export async function GET() {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: authUser.id },
       select: {
         id: true,
         name: true,
@@ -60,9 +59,9 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const authUser = await getAuthenticatedUser();
     
-    if (!session?.user?.id) {
+    if (!authUser) {
       return NextResponse.json(
         { error: 'Not authenticated' },
         { status: 401 }
@@ -77,7 +76,7 @@ export async function PATCH(request: NextRequest) {
       const existingUser = await prisma.user.findUnique({
         where: { 
           email: validatedData.email,
-          NOT: { id: session.user.id }
+          NOT: { id: authUser.id }
         }
       });
 
@@ -90,7 +89,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const updatedUser = await prisma.user.update({
-      where: { id: session.user.id },
+      where: { id: authUser.id },
       data: validatedData,
       select: {
         id: true,

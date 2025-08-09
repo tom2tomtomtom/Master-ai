@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { getAuthenticatedUser, handleAuthError } from '@/lib/supabase-auth-middleware';
 import { PrismaClient } from '@prisma/client';
 import { achievementSystem } from '@/lib/achievement-system';
 import { certificationEngine } from '@/lib/certification-engine';
@@ -13,9 +12,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await getAuthenticatedUser();
     
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -26,7 +25,7 @@ export async function GET(
     const progress = await prisma.userProgress.findUnique({
       where: {
         userId_lessonId: {
-          userId: session.user.id,
+          userId: user.id,
           lessonId: resolvedParams.id,
         },
       },
@@ -44,7 +43,7 @@ export async function GET(
       // Create initial progress record if it doesn't exist
       const newProgress = await prisma.userProgress.create({
         data: {
-          userId: session.user.id,
+          userId: user.id,
           lessonId: resolvedParams.id,
           status: 'not_started',
           progressPercentage: 0,
@@ -79,9 +78,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await getAuthenticatedUser();
     
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -128,13 +127,13 @@ export async function PUT(
     const progress = await prisma.userProgress.upsert({
       where: {
         userId_lessonId: {
-          userId: session.user.id,
+          userId: user.id,
           lessonId: resolvedParams.id,
         },
       },
       update: updateData,
       create: {
-        userId: session.user.id,
+        userId: user.id,
         lessonId: resolvedParams.id,
         ...updateData,
         status: updateData.status || 'in_progress',
@@ -159,7 +158,7 @@ export async function PUT(
       try {
         // Process achievement activity for lesson completion
         newAchievements = await achievementSystem.processUserActivity(
-          session.user.id,
+          user.id,
           {
             lessonCompleted: true,
             timeSpent: updateData.timeSpentMinutes || 0,
@@ -169,7 +168,7 @@ export async function PUT(
 
         // Check for new certifications
         newCertifications = await certificationEngine.autoAwardEligibleCertifications(
-          session.user.id
+          user.id
         );
       } catch (error) {
         console.error('Error processing achievements/certifications:', error);

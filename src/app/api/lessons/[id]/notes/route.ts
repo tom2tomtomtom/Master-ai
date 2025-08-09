@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
 import { PrismaClient } from '@prisma/client';
 import { achievementSystem } from '@/lib/achievement-system';
 
@@ -12,9 +11,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await getAuthenticatedUser();
     
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -24,7 +23,7 @@ export async function GET(
     const resolvedParams = await params;
     const notes = await prisma.lessonNote.findMany({
       where: {
-        userId: session.user.id,
+        userId: user.id,
         lessonId: resolvedParams.id,
       },
       orderBy: {
@@ -48,9 +47,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await getAuthenticatedUser();
     
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -70,7 +69,7 @@ export async function POST(
     const resolvedParams = await params;
     const note = await prisma.lessonNote.create({
       data: {
-        userId: session.user.id,
+        userId: user.id,
         lessonId: resolvedParams.id,
         content: content.trim(),
         timestamp: timestamp || null,
@@ -81,7 +80,7 @@ export async function POST(
     let newAchievements: string[] = [];
     try {
       newAchievements = await achievementSystem.processUserActivity(
-        session.user.id,
+        user.id,
         {
           noteCreated: true,
           date: new Date(),

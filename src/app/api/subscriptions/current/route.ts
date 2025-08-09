@@ -1,20 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware'
 import { prisma } from '@/lib/prisma'
 import { SUBSCRIPTION_TIERS } from '@/lib/stripe'
 
 export async function GET(_req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const authUser = await getAuthenticatedUser()
     
-    if (!session?.user?.id) {
+    if (!authUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Get user with subscription details
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: authUser.id },
       include: {
         stripeCustomer: true,
         stripeSubscriptions: {

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
 import { PrismaClient } from '@prisma/client';
 import { achievementSystem } from '@/lib/achievement-system';
 
@@ -12,9 +11,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await getAuthenticatedUser();
     
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -25,7 +24,7 @@ export async function GET(
     const bookmark = await prisma.lessonBookmark.findUnique({
       where: {
         userId_lessonId: {
-          userId: session.user.id,
+          userId: user.id,
           lessonId: resolvedParams.id,
         },
       },
@@ -55,9 +54,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await getAuthenticatedUser();
     
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -73,7 +72,7 @@ export async function POST(
     const existingBookmark = await prisma.lessonBookmark.findUnique({
       where: {
         userId_lessonId: {
-          userId: session.user.id,
+          userId: user.id,
           lessonId: resolvedParams.id,
         },
       },
@@ -84,7 +83,7 @@ export async function POST(
     const bookmark = await prisma.lessonBookmark.upsert({
       where: {
         userId_lessonId: {
-          userId: session.user.id,
+          userId: user.id,
           lessonId: resolvedParams.id,
         },
       },
@@ -93,7 +92,7 @@ export async function POST(
         timestamp: timestamp || null,
       },
       create: {
-        userId: session.user.id,
+        userId: user.id,
         lessonId: resolvedParams.id,
         title: title || null,
         timestamp: timestamp || null,
@@ -113,7 +112,7 @@ export async function POST(
     if (isNewBookmark) {
       try {
         newAchievements = await achievementSystem.processUserActivity(
-          session.user.id,
+          user.id,
           {
             bookmarkCreated: true,
             date: new Date(),
@@ -143,9 +142,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await getAuthenticatedUser();
     
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -156,7 +155,7 @@ export async function DELETE(
     const bookmark = await prisma.lessonBookmark.findUnique({
       where: {
         userId_lessonId: {
-          userId: session.user.id,
+          userId: user.id,
           lessonId: resolvedParams.id,
         },
       },
@@ -172,7 +171,7 @@ export async function DELETE(
     await prisma.lessonBookmark.delete({
       where: {
         userId_lessonId: {
-          userId: session.user.id,
+          userId: user.id,
           lessonId: resolvedParams.id,
         },
       },

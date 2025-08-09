@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
 import { achievementSystem } from '@/lib/achievement-system';
 
 // GET /api/achievements - Get available achievements and user progress
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await getAuthenticatedUser();
     
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -22,7 +21,7 @@ export async function GET(request: NextRequest) {
     if (earnedOnly) {
       // Get only earned achievements
       const userAchievements = await achievementSystem.getUserAchievements(
-        session.user.id,
+        user.id,
         category || undefined
       );
 
@@ -30,7 +29,7 @@ export async function GET(request: NextRequest) {
     } else {
       // Get all achievements with progress
       const achievementProgress = await achievementSystem.getUserAchievementProgress(
-        session.user.id
+        user.id
       );
 
       // Filter by category if specified
@@ -52,9 +51,9 @@ export async function GET(request: NextRequest) {
 // POST /api/achievements - Process user activity for achievements
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await getAuthenticatedUser();
     
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -72,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // Process the user activity
     const newAchievements = await achievementSystem.processUserActivity(
-      session.user.id,
+      user.id,
       {
         lessonCompleted,
         noteCreated,
@@ -85,7 +84,7 @@ export async function POST(request: NextRequest) {
     // Return the newly earned achievements
     if (newAchievements.length > 0) {
       const achievementDetails = await achievementSystem.getUserAchievements(
-        session.user.id
+        user.id
       );
 
       const newAchievementDetails = achievementDetails.filter(

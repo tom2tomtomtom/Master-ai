@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
 import { achievementSystem } from '@/lib/achievement-system';
 import { PrismaClient } from '@prisma/client';
 
@@ -9,16 +8,16 @@ const prisma = new PrismaClient();
 // GET /api/achievements/stats - Get user achievement statistics
 export async function GET(_request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await getAuthenticatedUser();
     
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    const userId = session.user.id;
+    const userId = user.id;
 
     // Get user stats
     const userStats = await prisma.userStats.findUnique({

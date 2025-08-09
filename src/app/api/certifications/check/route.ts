@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
 import { certificationEngine } from '@/lib/certification-engine';
 
 // GET /api/certifications/check - Check user eligibility for certifications
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await getAuthenticatedUser();
     
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -21,7 +20,7 @@ export async function GET(request: NextRequest) {
     if (certificationId) {
       // Check specific certification
       const eligibility = await certificationEngine.checkEligibility(
-        session.user.id,
+        user.id,
         certificationId
       );
 
@@ -32,7 +31,7 @@ export async function GET(request: NextRequest) {
     } else {
       // Check all certifications
       const eligibilities = await certificationEngine.checkAllEligibilities(
-        session.user.id
+        user.id
       );
 
       return NextResponse.json(eligibilities);
@@ -49,9 +48,9 @@ export async function GET(request: NextRequest) {
 // POST /api/certifications/check - Trigger automatic certification awarding
 export async function POST(_request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await getAuthenticatedUser();
     
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -60,7 +59,7 @@ export async function POST(_request: NextRequest) {
 
     // Auto-award eligible certifications
     const awardedCertifications = await certificationEngine.autoAwardEligibleCertifications(
-      session.user.id
+      user.id
     );
 
     return NextResponse.json({

@@ -1,7 +1,7 @@
 'use client';
 
 import { Bell, ChevronDown, User, CreditCard, Settings, LogOut, Crown } from 'lucide-react';
-import { useSession, signOut } from 'next-auth/react';
+import { useAuth } from '@/components/providers/auth-provider';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ title, subtitle, children }: DashboardHeaderProps) {
-  const { data: session } = useSession();
+  const { user, session, signOut } = useAuth();
   const router = useRouter();
 
   const getInitials = (name: string | null | undefined) => {
@@ -29,7 +29,7 @@ export function DashboardHeader({ title, subtitle, children }: DashboardHeaderPr
       .slice(0, 2);
   };
 
-  const subscriptionTier = session?.user?.subscriptionTier || 'free';
+  const subscriptionTier = (user?.user_metadata?.subscriptionTier || 'free') as string;
   const subscriptionConfig = {
     free: { name: 'Free', color: 'bg-gray-100 text-gray-800' },
     pro: { name: 'Pro', color: 'bg-blue-100 text-blue-800' },
@@ -37,8 +37,13 @@ export function DashboardHeader({ title, subtitle, children }: DashboardHeaderPr
     enterprise: { name: 'Enterprise', color: 'bg-yellow-100 text-yellow-800' }
   };
 
-  const handleSignOut = () => {
-    signOut({ callbackUrl: '/' });
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
   };
 
   return (
@@ -67,18 +72,18 @@ export function DashboardHeader({ title, subtitle, children }: DashboardHeaderPr
             <DropdownMenu.Trigger asChild>
               <Button variant="ghost" className="flex items-center space-x-2 hover:bg-gray-100">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={session?.user?.image || undefined} />
+                  <AvatarImage src={user?.user_metadata?.avatar_url || undefined} />
                   <AvatarFallback className="bg-blue-100 text-blue-700 text-sm font-medium">
-                    {getInitials(session?.user?.name)}
+                    {getInitials(user?.user_metadata?.full_name || user?.user_metadata?.name)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden md:block text-left">
                   <div className="text-sm font-medium text-gray-900">
-                    {session?.user?.name || 'User'}
+                    {user?.user_metadata?.full_name || user?.user_metadata?.name || 'User'}
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-600">
-                      {session?.user?.email}
+                      {user?.email}
                     </span>
                     <Badge 
                       className={cn(
@@ -104,10 +109,10 @@ export function DashboardHeader({ title, subtitle, children }: DashboardHeaderPr
                 {/* User Info Header */}
                 <div className="px-3 py-2 border-b border-gray-100">
                   <div className="text-sm font-medium text-gray-900">
-                    {session?.user?.name || 'User'}
+                    {user?.user_metadata?.full_name || user?.user_metadata?.name || 'User'}
                   </div>
                   <div className="text-xs text-gray-600 truncate">
-                    {session?.user?.email}
+                    {user?.email}
                   </div>
                   <Badge 
                     className={cn(
