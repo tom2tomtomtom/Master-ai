@@ -5,25 +5,58 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 /**
- * Production-optimized Prisma client with serverless configuration
+ * Production-optimized Prisma client with enhanced Supabase connectivity
  */
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  log: process.env.NODE_ENV === 'development' 
-    ? ['query', 'info', 'warn', 'error'] 
-    : ['error'],
-  errorFormat: 'pretty',
-  // Optimized for serverless environments
-  __internal: {
-    engine: {
-      connectTimeout: 60000, // 60 seconds for serverless cold starts
-      acquireTimeout: 60000,
-      transactionOptions: {
-        maxWait: 60000, // Wait up to 60 seconds to start a transaction
-        timeout: 60000, // Allow up to 60 seconds for the transaction to complete
+const createPrismaClient = () => {
+  const isProduction = process.env.NODE_ENV === 'production'
+  
+  try {
+    const databaseUrl = validateDatabaseUrl()
+    
+    return new PrismaClient({
+    log: process.env.NODE_ENV === 'development' 
+      ? ['query', 'info', 'warn', 'error'] 
+      : ['error'],
+    errorFormat: 'pretty',
+    // Enhanced configuration for Supabase + Vercel serverless
+    __internal: {
+      engine: {
+        connectTimeout: isProduction ? 30000 : 5000, // Increased to 30s for serverless
+        acquireTimeout: isProduction ? 30000 : 5000,
+        transactionOptions: {
+          maxWait: 25000, // Wait up to 25 seconds to start a transaction
+          timeout: 40000, // Allow up to 40 seconds for the transaction to complete
+        },
       },
     },
-  },
-})
+    // Use validated database URL with fallback
+    datasourceUrl: databaseUrl,
+  })
+  } catch (error) {
+    console.error('❌ Failed to create Prisma client:', error)
+    throw error
+  }
+}
+
+// Database URL validation and fallback logic
+function validateDatabaseUrl(): string {
+  const directUrl = process.env.DIRECT_DATABASE_URL
+  const pooledUrl = process.env.DATABASE_URL
+  
+  if (directUrl && directUrl.trim() !== '') {
+    console.log('🔄 Using direct database connection')
+    return directUrl.trim()
+  }
+  
+  if (pooledUrl && pooledUrl.trim() !== '') {
+    console.log('🏊 Using pooled database connection')
+    return pooledUrl.trim()
+  }
+  
+  throw new Error('❌ No valid DATABASE_URL or DIRECT_DATABASE_URL found')
+}
+
+export const prisma = globalForPrisma.prisma ?? createPrismaClient()
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
@@ -33,32 +66,52 @@ let connectionRetries = 0
 const MAX_RETRIES = 3
 
 /**
- * Ensures database connection with enhanced retry logic for serverless
+ * Enhanced database connection with Supabase-specific retry logic
  */
 export async function ensureConnection(): Promise<boolean> {
   if (isConnected) return true
   
-  try {
-    // Force a simple query to test connection
-    await prisma.$queryRaw`SELECT 1`
-    isConnected = true
-    connectionRetries = 0
-    return true
-  } catch (error) {
-    connectionRetries++
-    console.error(`Database connection attempt ${connectionRetries}/${MAX_RETRIES} failed:`, error)
+  const maxRetries = 3
+  let attempt = 0
+  
+  while (attempt < maxRetries) {
+    attempt++
+    connectionRetries = attempt
     
-    if (connectionRetries < MAX_RETRIES) {
-      // Progressive backoff: 2s, 5s, 10s
-      const waitTime = connectionRetries === 1 ? 2000 : connectionRetries === 2 ? 5000 : 10000
-      console.log(`Retrying connection in ${waitTime}ms...`)
-      await new Promise(resolve => setTimeout(resolve, waitTime))
-      return ensureConnection()
+    try {
+      console.log(`🔌 Database connection attempt ${attempt}/${maxRetries}...`)
+      
+      // Test connection with a lightweight query
+      const result = await prisma.$queryRaw`SELECT 1 as test`
+      
+      if (result) {
+        console.log('✅ Database connection successful')
+        isConnected = true
+        connectionRetries = 0
+        return true
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.error(`❌ Connection attempt ${attempt} failed:`, errorMessage)
+      
+      // Specific handling for Supabase/PostgreSQL errors
+      if (errorMessage.includes('ENOTFOUND') || errorMessage.includes('pooler.supabase.com')) {
+        console.log('🔄 Supabase pooler connection failed, will retry...')
+      } else if (errorMessage.includes('connection limit')) {
+        console.log('🚫 Connection pool limit reached, waiting longer...')
+      }
+      
+      // Don't wait on final attempt
+      if (attempt < maxRetries) {
+        const waitTime = Math.min(2000 * attempt, 8000) // 2s, 4s, 8s
+        console.log(`⏳ Waiting ${waitTime}ms before retry...`)
+        await new Promise(resolve => setTimeout(resolve, waitTime))
+      }
     }
-    
-    console.error('All connection attempts failed. Using fallback mode.')
-    return false
   }
+  
+  console.error('🚨 All database connection attempts failed. Using fallback mode.')
+  return false
 }
 
 /**
