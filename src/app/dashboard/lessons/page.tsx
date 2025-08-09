@@ -1,0 +1,157 @@
+import Link from 'next/link';
+import { prisma } from '@/lib/prisma';
+import { DashboardLayout } from '@/components/dashboard/layout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Clock, BookOpen, Star } from 'lucide-react';
+
+async function getLessons() {
+  try {
+    const lessons = await prisma.lesson.findMany({
+      where: { isPublished: true },
+      select: {
+        id: true,
+        lessonNumber: true,
+        title: true,
+        description: true,
+        estimatedTime: true,
+        difficultyLevel: true,
+        isFree: true,
+        tools: true,
+      },
+      orderBy: { lessonNumber: 'asc' },
+      take: 20, // Show first 20 lessons
+    });
+    return lessons;
+  } catch (error) {
+    console.error('Failed to fetch lessons:', error);
+    return [];
+  }
+}
+
+function getDifficultyColor(level: string): string {
+  switch (level?.toLowerCase()) {
+    case 'beginner':
+      return 'bg-green-100 text-green-800';
+    case 'intermediate':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'advanced':
+      return 'bg-red-100 text-red-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+}
+
+export default async function LessonsPage() {
+  const lessons = await getLessons();
+
+  return (
+    <DashboardLayout 
+      title="All Lessons" 
+      subtitle="Browse and start learning from our comprehensive AI curriculum"
+    >
+      <div className="space-y-6">
+        {lessons.length === 0 ? (
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Lessons Available</h3>
+                <p className="text-gray-500">Lessons are being prepared. Check back soon!</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {lessons.map((lesson) => (
+              <Card key={lesson.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className="text-xs">
+                          Lesson {lesson.lessonNumber}
+                        </Badge>
+                        {lesson.isFree && (
+                          <Badge className="bg-green-100 text-green-800 text-xs">
+                            FREE
+                          </Badge>
+                        )}
+                      </div>
+                      <CardTitle className="text-lg line-clamp-2 mb-2">
+                        {lesson.title}
+                      </CardTitle>
+                    </div>
+                  </div>
+                  
+                  {lesson.description && (
+                    <p className="text-sm text-gray-600 line-clamp-2">
+                      {lesson.description}
+                    </p>
+                  )}
+                </CardHeader>
+                
+                <CardContent className="pt-0">
+                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                    <div className="flex items-center gap-4">
+                      {lesson.estimatedTime && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          <span>{lesson.estimatedTime}m</span>
+                        </div>
+                      )}
+                      
+                      {lesson.difficultyLevel && (
+                        <Badge 
+                          className={`text-xs ${getDifficultyColor(lesson.difficultyLevel)}`}
+                          variant="secondary"
+                        >
+                          {lesson.difficultyLevel}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  {lesson.tools && Array.isArray(lesson.tools) && lesson.tools.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-4">
+                      {lesson.tools.slice(0, 3).map((tool: string, index: number) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {tool}
+                        </Badge>
+                      ))}
+                      {lesson.tools.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{lesson.tools.length - 3} more
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+
+                  <Button asChild className="w-full">
+                    <Link href={`/dashboard/lesson/${lesson.id}`}>
+                      Start Lesson
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {lessons.length >= 20 && (
+          <Card>
+            <CardContent className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <p className="text-gray-600 mb-4">Showing first 20 lessons</p>
+                <Button variant="outline">
+                  Load More Lessons
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </DashboardLayout>
+  );
+}

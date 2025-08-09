@@ -251,7 +251,6 @@ function SignUpContent() {
                 {/* OAuth Buttons */}
                 <div className="space-y-3">
                   <OAuthButton provider="google" callbackUrl={callbackUrl} />
-                  <OAuthButton provider="github" callbackUrl={callbackUrl} />
                 </div>
 
                 {/* Divider */}

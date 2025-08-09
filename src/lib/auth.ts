@@ -9,8 +9,6 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   // debug logs only if enabled via env
   debug: process.env.NEXTAUTH_DEBUG === 'true',
-  // Allow linking OAuth to existing email-based users (avoid duplicate email conflicts)
-  allowDangerousEmailAccountLinking: true,
   adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
@@ -146,14 +144,8 @@ export const authOptions: NextAuthOptions = {
   },
   // Extra diagnostics in production to capture callback errors
   events: {
-    async error(message) {
-      console.error("[next-auth][event.error]", message)
-    },
     async signIn(message) {
       console.log("[next-auth][event.signIn]", message?.user?.email || message)
-    },
-    async linkAccount(message) {
-      console.log("[next-auth][event.linkAccount]", message?.provider || message)
     },
     async createUser(message) {
       console.log("[next-auth][event.createUser]", message?.user?.email || message)

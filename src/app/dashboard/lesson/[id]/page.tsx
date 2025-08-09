@@ -1,12 +1,10 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth/next';
-import { PrismaClient } from '@prisma/client';
 
 import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 import { LessonViewer } from '@/components/lesson/lesson-viewer';
-
-const prisma = new PrismaClient();
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -122,9 +120,9 @@ function LessonViewerSkeleton(): JSX.Element {
 export default async function LessonPage({ params, searchParams }: PageProps): Promise<JSX.Element> {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id) {
-    notFound();
-  }
+  // For debugging and initial access, allow viewing lessons without auth
+  // In production, you might want to redirect to signin instead
+  const userId = session?.user?.id;
 
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
@@ -134,7 +132,14 @@ export default async function LessonPage({ params, searchParams }: PageProps): P
     notFound();
   }
 
-  const hasAccess = await checkAccess(session.user.id, lesson);
+  // Check access if user is authenticated, otherwise check if lesson is free
+  let hasAccess = false;
+  if (userId) {
+    hasAccess = await checkAccess(userId, lesson);
+  } else {
+    // Allow access to free lessons for unauthenticated users
+    hasAccess = lesson.isFree;
+  }
 
   if (!hasAccess) {
     return (
