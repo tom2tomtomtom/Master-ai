@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/components/providers/auth-provider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -9,13 +10,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Eye, EyeOff, Mail, Lock, Chrome } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 interface SupabaseAuthProps {
   mode?: 'signin' | 'signup'
   redirectTo?: string
 }
 
-export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: SupabaseAuthProps) {
+export function SupabaseAuthClean({ mode = 'signin', redirectTo = '/dashboard' }: SupabaseAuthProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -23,19 +25,30 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
-
-  // Debug logging for loading state
-  console.log('🐛 SupabaseAuth render - loading:', loading, 'mode:', mode)
-
+  
+  const router = useRouter()
+  const { isAuthenticated } = useAuth()
   const isSignUp = mode === 'signup'
+
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    router.push(redirectTo)
+    return null
+  }
 
   // Handle email/password authentication
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('🐛 handleAuth: Setting loading to true')
     setLoading(true)
     setError(null)
     setMessage(null)
+
+    // Basic validation
+    if (!email || !password) {
+      setError('Email and password are required')
+      setLoading(false)
+      return
+    }
 
     if (isSignUp && password !== confirmPassword) {
       setError('Passwords do not match')
@@ -50,46 +63,46 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
     }
 
     try {
+      let result
+      
       if (isSignUp) {
-        const { data, error } = await supabase.auth.signUp({
+        result = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}${redirectTo}`,
-          },
+          }
         })
-
-        if (error) throw error
-
-        if (data.user && !data.session) {
-          setMessage('Check your email to confirm your account')
+        
+        if (result.error) throw result.error
+        
+        if (result.data?.user && !result.data?.session) {
+          setMessage('Check your email for the confirmation link to complete your registration.')
         } else {
-          // User is signed in immediately
-          window.location.href = redirectTo
+          // Auto sign-in successful
+          router.push(redirectTo)
         }
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        result = await supabase.auth.signInWithPassword({
           email,
           password,
         })
-
-        if (error) throw error
-
-        if (data.user) {
-          window.location.href = redirectTo
-        }
+        
+        if (result.error) throw result.error
+        
+        // Sign in successful
+        router.push(redirectTo)
       }
     } catch (error: any) {
+      console.error('Auth error:', error)
       setError(error.message || 'Authentication failed')
     } finally {
-      console.log('🐛 handleAuth finally: Setting loading to false')
       setLoading(false)
     }
   }
 
   // Handle Google OAuth
   const handleGoogleAuth = async () => {
-    console.log('🐛 handleGoogleAuth: Setting loading to true')
     setLoading(true)
     setError(null)
 
@@ -97,14 +110,15 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 
       if (error) throw error
+      // OAuth redirect will happen automatically
     } catch (error: any) {
+      console.error('Google auth error:', error)
       setError(error.message || 'Google sign in failed')
-      console.log('🐛 handleGoogleAuth error: Setting loading to false')
       setLoading(false)
     }
   }
@@ -126,10 +140,9 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
         {/* Google OAuth Button */}
         <Button 
           variant="outline" 
-          className="w-full !opacity-100 !pointer-events-auto !cursor-pointer" 
+          className="w-full" 
           onClick={handleGoogleAuth}
-          disabled={false}
-          style={{ opacity: '1 !important', pointerEvents: 'auto !important', cursor: 'pointer !important' }}
+          disabled={loading}
         >
           <Chrome className="w-4 h-4 mr-2" />
           Continue with Google
@@ -169,10 +182,9 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 !opacity-100 !pointer-events-auto !cursor-text"
+                className="pl-10"
                 required
-                disabled={false}
-                style={{ opacity: '1 !important', pointerEvents: 'auto !important', cursor: 'text !important' }}
+                disabled={loading}
               />
             </div>
           </div>
@@ -187,16 +199,16 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10 !opacity-100 !pointer-events-auto !cursor-text"
+                className="pl-10 pr-10"
                 required
-                disabled={false}
+                disabled={loading}
                 minLength={6}
-                style={{ opacity: '1 !important', pointerEvents: 'auto !important', cursor: 'text !important' }}
               />
               <button
                 type="button"
                 className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
                 onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -214,7 +226,7 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
                   placeholder="Confirm your password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 pr-10"
                   required
                   disabled={loading}
                   minLength={6}
@@ -223,7 +235,7 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
             </div>
           )}
 
-          <Button type="submit" className="w-full !opacity-100 !pointer-events-auto !cursor-pointer" disabled={false} style={{ opacity: '1 !important', pointerEvents: 'auto !important', cursor: 'pointer !important' }}>
+          <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
           </Button>
         </form>
@@ -248,18 +260,23 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
         </div>
 
         {!isSignUp && (
-          <div className="text-center">
-            <Link href="/auth/forgot-password" className="text-sm text-blue-600 hover:underline">
+          <div className="text-center text-sm">
+            <Link href="/auth/forgot-password" className="text-blue-600 hover:underline">
               Forgot password?
             </Link>
           </div>
         )}
 
+        {/* Terms and Privacy */}
         <div className="text-xs text-gray-500 text-center">
-          By {isSignUp ? 'creating an account' : 'signing in'}, you agree to our{' '}
-          <Link href="/terms" className="text-blue-600 hover:underline">Terms of Service</Link>
-          {' '}and{' '}
-          <Link href="/privacy" className="text-blue-600 hover:underline">Privacy Policy</Link>
+          By signing {isSignUp ? 'up' : 'in'}, you agree to our{' '}
+          <Link href="/terms" className="text-blue-600 hover:underline">
+            Terms of Service
+          </Link>{' '}
+          and{' '}
+          <Link href="/privacy" className="text-blue-600 hover:underline">
+            Privacy Policy
+          </Link>
         </div>
       </CardContent>
     </Card>

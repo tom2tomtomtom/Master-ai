@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useAuth } from '@/components/providers/auth-provider';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ import {
 import type { DashboardStats, LearningPathWithProgress, RecentActivity } from '@/types/dashboard';
 
 export default function DashboardPage(): JSX.Element {
-  const { session, loading: authLoading, isAuthenticated } = useSupabaseAuth();
+  const { user, session, loading: authLoading, isAuthenticated } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [learningPaths, setLearningPaths] = useState<LearningPathWithProgress[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
@@ -228,7 +228,7 @@ export default function DashboardPage(): JSX.Element {
 
   return (
     <DashboardLayout 
-      title={`${getGreeting()}, ${session?.user?.user_metadata?.name || session?.user?.email || 'Student'}!`}
+      title={`${getGreeting()}, ${user?.user_metadata?.name || user?.email || 'Student'}!`}
       subtitle={getMotivationalMessage()}
     >
       <div className="space-y-8">

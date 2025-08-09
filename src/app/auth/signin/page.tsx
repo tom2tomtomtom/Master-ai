@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { SupabaseAuth } from '@/components/auth/supabase-auth';
+import { SupabaseAuthClean } from '@/components/auth/supabase-auth-clean';
 import { Brain } from 'lucide-react';
 
 function SignInContent() {
@@ -20,7 +20,7 @@ function SignInContent() {
         </div>
 
         {/* Supabase Auth Component */}
-        <SupabaseAuth mode="signin" redirectTo="/dashboard" />
+        <SupabaseAuthClean mode="signin" redirectTo="/dashboard" />
       </div>
     </div>
   );
