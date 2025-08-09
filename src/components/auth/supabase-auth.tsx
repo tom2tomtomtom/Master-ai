@@ -24,11 +24,15 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
   const [message, setMessage] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
 
+  // Debug logging for loading state
+  console.log('🐛 SupabaseAuth render - loading:', loading, 'mode:', mode)
+
   const isSignUp = mode === 'signup'
 
   // Handle email/password authentication
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('🐛 handleAuth: Setting loading to true')
     setLoading(true)
     setError(null)
     setMessage(null)
@@ -78,12 +82,14 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
     } catch (error: any) {
       setError(error.message || 'Authentication failed')
     } finally {
+      console.log('🐛 handleAuth finally: Setting loading to false')
       setLoading(false)
     }
   }
 
   // Handle Google OAuth
   const handleGoogleAuth = async () => {
+    console.log('🐛 handleGoogleAuth: Setting loading to true')
     setLoading(true)
     setError(null)
 
@@ -98,6 +104,7 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
       if (error) throw error
     } catch (error: any) {
       setError(error.message || 'Google sign in failed')
+      console.log('🐛 handleGoogleAuth error: Setting loading to false')
       setLoading(false)
     }
   }
