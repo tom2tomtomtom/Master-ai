@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ import {
 import type { DashboardStats, LearningPathWithProgress, RecentActivity } from '@/types/dashboard';
 
 export default function DashboardPage(): JSX.Element {
-  const { data: session } = useSession();
+  const { session, loading: authLoading, isAuthenticated } = useSupabaseAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [learningPaths, setLearningPaths] = useState<LearningPathWithProgress[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
@@ -149,7 +149,7 @@ export default function DashboardPage(): JSX.Element {
       }
     };
 
-    if (session?.user) {
+    if (isAuthenticated) {
       fetchDashboardData();
     } else {
       // User is not authenticated, still show dashboard with default data
@@ -228,7 +228,7 @@ export default function DashboardPage(): JSX.Element {
 
   return (
     <DashboardLayout 
-      title={`${getGreeting()}, ${session?.user?.name || 'Student'}!`}
+      title={`${getGreeting()}, ${session?.user?.user_metadata?.name || session?.user?.email || 'Student'}!`}
       subtitle={getMotivationalMessage()}
     >
       <div className="space-y-8">

@@ -97,7 +97,7 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}${redirectTo}`,
+          redirectTo: `${window.location.origin}/dashboard`,
         },
       })
 
@@ -126,10 +126,10 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
         {/* Google OAuth Button */}
         <Button 
           variant="outline" 
-          className="w-full" 
+          className="w-full !opacity-100 !pointer-events-auto !cursor-pointer" 
           onClick={handleGoogleAuth}
-          disabled={loading}
-          style={{ opacity: 1, pointerEvents: 'auto', cursor: 'pointer' }}
+          disabled={false}
+          style={{ opacity: '1 !important', pointerEvents: 'auto !important', cursor: 'pointer !important' }}
         >
           <Chrome className="w-4 h-4 mr-2" />
           Continue with Google
@@ -169,10 +169,10 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-10"
+                className="pl-10 !opacity-100 !pointer-events-auto !cursor-text"
                 required
-                disabled={loading}
-                style={{ opacity: 1, pointerEvents: 'auto', cursor: 'text' }}
+                disabled={false}
+                style={{ opacity: '1 !important', pointerEvents: 'auto !important', cursor: 'text !important' }}
               />
             </div>
           </div>
@@ -187,11 +187,11 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10"
+                className="pl-10 pr-10 !opacity-100 !pointer-events-auto !cursor-text"
                 required
-                disabled={loading}
+                disabled={false}
                 minLength={6}
-                style={{ opacity: 1, pointerEvents: 'auto', cursor: 'text' }}
+                style={{ opacity: '1 !important', pointerEvents: 'auto !important', cursor: 'text !important' }}
               />
               <button
                 type="button"
@@ -223,7 +223,7 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
             </div>
           )}
 
-          <Button type="submit" className="w-full" disabled={loading} style={{ opacity: 1, pointerEvents: 'auto', cursor: 'pointer' }}>
+          <Button type="submit" className="w-full !opacity-100 !pointer-events-auto !cursor-pointer" disabled={false} style={{ opacity: '1 !important', pointerEvents: 'auto !important', cursor: 'pointer !important' }}>
             {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
           </Button>
         </form>
