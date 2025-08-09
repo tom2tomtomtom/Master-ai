@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/components/providers/auth-provider';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -52,7 +52,7 @@ const subscriptionTiers = {
 };
 
 export default function ProfilePage(): JSX.Element {
-  const { data: session, update } = useSession();
+  const { user, session, loading: authLoading } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -127,8 +127,7 @@ export default function ProfilePage(): JSX.Element {
       if (response.ok) {
         setProfile(prev => prev ? { ...prev, ...data.user } : null);
         setSuccess('Profile updated successfully');
-        // Update session data
-        await update({ name: data.user.name });
+        // Session will be automatically updated by Supabase
       } else {
         setError(data.error || 'Failed to update profile');
       }

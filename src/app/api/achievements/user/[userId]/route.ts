@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireUserResourceAccess, handleAuthError } from '@/lib/auth-middleware';
+import { requireAuth, handleAuthError } from '@/lib/supabase-auth-middleware';
 import { achievementSystem } from '@/lib/achievement-system';
 
 // GET /api/achievements/user/[userId] - Get user's achievements

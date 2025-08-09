@@ -1,8 +1,6 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import { getServerSession } from 'next-auth/next';
-
-import { authOptions } from '@/lib/auth';
+import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { LessonViewer } from '@/components/lesson/lesson-viewer';
 
@@ -118,11 +116,11 @@ function LessonViewerSkeleton(): JSX.Element {
 }
 
 export default async function LessonPage({ params, searchParams }: PageProps): Promise<JSX.Element> {
-  const session = await getServerSession(authOptions);
+  const user = await getAuthenticatedUser();
 
   // For debugging and initial access, allow viewing lessons without auth
   // In production, you might want to redirect to signin instead
-  const userId = session?.user?.id;
+  const userId = user?.id;
 
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;

@@ -1,4 +1,5 @@
 import { forwardRef } from 'react';
+import DOMPurify from 'dompurify';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -104,7 +105,7 @@ export const LessonContent = forwardRef<HTMLDivElement, LessonContentProps>(
           className="prose prose-lg max-w-none dark:prose-invert overflow-y-auto"
           style={{ fontSize: `${fontSize}px`, lineHeight: 1.7 }}
           onScroll={onScroll}
-          dangerouslySetInnerHTML={{ __html: processedContent }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(processedContent) }}
         />
 
         {/* Lesson Actions */}

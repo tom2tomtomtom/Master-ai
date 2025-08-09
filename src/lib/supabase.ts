@@ -12,13 +12,7 @@ function getSupabaseConfig() {
   }
 
   if (!supabaseAnonKey || supabaseAnonKey === 'your-supabase-anon-key-here') {
-    console.warn('⚠️  NEXT_PUBLIC_SUPABASE_ANON_KEY not configured. Please get it from your Supabase project dashboard.')
-    console.warn('📍 Go to: https://app.supabase.com/project/fsohtauqtcftdjcjfdpq/settings/api')
-    // For now, return a placeholder to prevent crashes
-    return {
-      supabaseUrl,
-      supabaseAnonKey: 'placeholder-anon-key'
-    }
+    throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required. Please configure it in your environment variables.')
   }
 
   return {
@@ -81,5 +75,5 @@ export async function signOut() {
 
 console.log('🚀 Supabase client initialized:', {
   url: config.supabaseUrl,
-  hasAnonKey: !!config.supabaseAnonKey && config.supabaseAnonKey !== 'placeholder-anon-key'
+  hasAnonKey: !!config.supabaseAnonKey
 })

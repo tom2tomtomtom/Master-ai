@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
 import { PrismaClient } from '@prisma/client';
 import { certificationEngine } from '@/lib/certification-engine';
-import { requireAuth, requireAdmin, logAdminAction, handleAuthError } from '@/lib/auth-middleware';
+import { requireAuth, requireAdmin, logAdminAction, handleAuthError } from '@/lib/supabase-auth-middleware';
 
 const prisma = new PrismaClient();
 

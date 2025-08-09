@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, logAdminAction, handleAuthError } from '@/lib/auth-middleware';
+import { requireAdmin, logAdminAction, handleAuthError } from '@/lib/supabase-auth-middleware';
 import { backgroundJobSystem } from '@/lib/background-jobs';
 
 // POST /api/system/jobs - Trigger background jobs (admin only)
