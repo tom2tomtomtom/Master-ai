@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { syncUser } from '@/lib/user-sync'
 import type { User, Session } from '@supabase/supabase-js'
 
 interface AuthContextType {
@@ -31,6 +32,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(session)
           setUser(session?.user ?? null)
           console.log('🔐 Initial auth session loaded:', !!session)
+          
+          // Sync user with database on initial load
+          if (session?.user) {
+            syncUser(session.user).catch(error => {
+              console.error('Failed to sync user on initial load:', error)
+            })
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error)
@@ -51,8 +59,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false)
 
         // Handle specific auth events
-        if (event === 'SIGNED_IN') {
-          console.log('✅ User signed in:', session?.user?.email)
+        if (event === 'SIGNED_IN' && session?.user) {
+          console.log('✅ User signed in:', session.user.email)
+          // Sync user with database
+          syncUser(session.user).catch(error => {
+            console.error('Failed to sync user:', error)
+          })
         } else if (event === 'SIGNED_OUT') {
           console.log('👋 User signed out')
         } else if (event === 'TOKEN_REFRESHED') {

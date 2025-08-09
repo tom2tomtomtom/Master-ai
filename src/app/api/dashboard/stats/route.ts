@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
 import { prisma, safeQuery } from '@/lib/prisma';
 // import { cacheService, CacheKeys, CacheTTL } from '@/lib/cache';
 // import { monitoredQuery } from '@/lib/db-monitor';
 
 export async function GET(_request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await getAuthenticatedUser();
     
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = session.user.id;
+    const userId = user.id;
 
     // Try to get cached stats first
     // const stats = await cacheService.getOrSet(
