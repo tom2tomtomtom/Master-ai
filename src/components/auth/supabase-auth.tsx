@@ -129,6 +129,7 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
           className="w-full" 
           onClick={handleGoogleAuth}
           disabled={loading}
+          style={{ opacity: 1, pointerEvents: 'auto', cursor: 'pointer' }}
         >
           <Chrome className="w-4 h-4 mr-2" />
           Continue with Google
@@ -171,6 +172,7 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
                 className="pl-10"
                 required
                 disabled={loading}
+                style={{ opacity: 1, pointerEvents: 'auto', cursor: 'text' }}
               />
             </div>
           </div>
@@ -189,6 +191,7 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
                 required
                 disabled={loading}
                 minLength={6}
+                style={{ opacity: 1, pointerEvents: 'auto', cursor: 'text' }}
               />
               <button
                 type="button"
@@ -220,7 +223,7 @@ export function SupabaseAuth({ mode = 'signin', redirectTo = '/dashboard' }: Sup
             </div>
           )}
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" disabled={loading} style={{ opacity: 1, pointerEvents: 'auto', cursor: 'pointer' }}>
             {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
           </Button>
         </form>
