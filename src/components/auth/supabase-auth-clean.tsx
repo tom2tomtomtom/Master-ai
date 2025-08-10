@@ -81,7 +81,9 @@ export function SupabaseAuthClean({ mode = 'signin', redirectTo = '/dashboard' }
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}${redirectTo}`,
+            emailRedirectTo: typeof window !== 'undefined' 
+              ? `${window.location.origin}${redirectTo}` 
+              : `${redirectTo}`,
           }
         })
         
@@ -121,7 +123,9 @@ export function SupabaseAuthClean({ mode = 'signin', redirectTo = '/dashboard' }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: typeof window !== 'undefined' 
+            ? `${window.location.origin}/auth/callback`
+            : '/auth/callback',
         },
       })
 
