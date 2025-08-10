@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAdminAuth } from '@/lib/supabase-auth-middleware';
-import { 
-  getLoggingStats, 
-  validateLoggingConfig, 
-  testLoggingSystem,
-  LoggingPerformanceMonitor
-} from '@/lib/logging-config';
-import { queryAnalyzer } from '@/lib/prisma-logging';
+// Dynamic imports to prevent client-side bundling of server modules
 
 async function loggingDashboardHandler(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -35,6 +29,7 @@ async function loggingDashboardHandler(request: NextRequest) {
 
 async function handleLoggingStats() {
   try {
+    const { getLoggingStats } = await import('@/lib/logging-config');
     const stats = getLoggingStats();
     
     // Add additional system information
@@ -76,6 +71,7 @@ async function handleLoggingStats() {
 
 async function handleConfigValidation() {
   try {
+    const { validateLoggingConfig } = await import('@/lib/logging-config');
     const validation = validateLoggingConfig();
     
     return NextResponse.json({
@@ -105,6 +101,7 @@ async function handleConfigValidation() {
 
 async function handleLoggingTest() {
   try {
+    const { testLoggingSystem } = await import('@/lib/logging-config');
     const testResult = await testLoggingSystem();
     
     return NextResponse.json({
@@ -132,6 +129,7 @@ async function handleLoggingTest() {
 
 async function handlePerformanceMetrics() {
   try {
+    const { LoggingPerformanceMonitor } = await import('@/lib/logging-config');
     const metrics = LoggingPerformanceMonitor.getMetrics();
     
     return NextResponse.json({
@@ -152,6 +150,7 @@ async function handlePerformanceMetrics() {
 
 async function handleQueryStats() {
   try {
+    const { queryAnalyzer } = await import('@/lib/prisma-logging');
     const queryStats = queryAnalyzer.getAllStats();
     
     return NextResponse.json({

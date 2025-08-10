@@ -131,8 +131,9 @@ export function validateLoggingConfig(): { valid: boolean; errors: string[] } {
   // Check log directory permissions in production
   if (process.env.NODE_ENV === 'production' && typeof window === 'undefined') {
     try {
-      const fs = require('fs');
-      const path = require('path');
+      // Use dynamic import to prevent client-side bundling
+      const fs = (globalThis as any).__fs || eval('require')('fs');
+      const path = (globalThis as any).__path || eval('require')('path');
       const logDir = path.join(process.cwd(), 'logs');
       
       // Try to create logs directory if it doesn't exist
@@ -295,8 +296,9 @@ export class LogRotationManager {
     if (typeof window !== 'undefined') return;
     
     try {
-      const fs = require('fs');
-      const path = require('path');
+      // Use dynamic require to prevent client-side bundling
+      const fs = (globalThis as any).__fs || eval('require')('fs');
+      const path = (globalThis as any).__path || eval('require')('path');
       const logDir = path.join(process.cwd(), 'logs');
 
       if (!fs.existsSync(logDir)) return;

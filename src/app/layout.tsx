@@ -7,23 +7,7 @@ export const metadata: Metadata = {
   description: "Master all AI tools with our comprehensive educational platform featuring 88 lessons across 8 learning paths",
 };
 
-// Initialize logging system on server startup with dynamic import
-if (typeof window === 'undefined') {
-  import('@/lib/logging-config').then(({ initializeLogging, LogRotationManager }) => {
-    initializeLogging({
-      enableFileLogging: process.env.NODE_ENV === 'production',
-      enablePerformanceLogging: true,
-      logLevel: process.env.NODE_ENV === 'production' ? 'info' : 'debug'
-    });
-
-    // Start log rotation in production
-    if (process.env.NODE_ENV === 'production') {
-      LogRotationManager.startRotation(24); // Rotate every 24 hours
-    }
-  }).catch(error => {
-    console.warn('Failed to initialize logging:', error);
-  });
-}
+// Logging initialization will be handled by API routes to prevent client bundling
 
 export default function RootLayout({
   children,

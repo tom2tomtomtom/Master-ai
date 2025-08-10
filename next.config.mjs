@@ -39,6 +39,10 @@ const nextConfig = {
         '@/lib/content-importer': false,
         '@/lib/logging-config': false,
         '@/lib/certificate-generator': false,
+        '@/lib/prisma-logging': false,
+        'fs': false,
+        'path': false,
+        'os': false,
       };
 
       // Add externals to completely prevent bundling of problematic modules
