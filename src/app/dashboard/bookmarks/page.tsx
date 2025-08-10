@@ -62,7 +62,16 @@ export default function BookmarksPage() {
           setFilteredBookmarks(data);
         }
       } catch (error) {
-        // TODO: Implement proper error logging service
+        // Log error with context using structured logging
+        if (typeof window !== 'undefined') {
+          // Client-side error logging
+          const { clientLogger } = await import('@/lib/client-logger');
+          clientLogger.error('Failed to fetch bookmarks', {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            component: 'BookmarksPage',
+            action: 'fetchBookmarks'
+          });
+        }
         console.error('Error fetching bookmarks:', error);
       } finally {
         setLoading(false);

@@ -367,13 +367,21 @@ export class BackgroundJobSystem {
               .map(id => certificationMap.get(id))
               .filter(Boolean);
 
-            // TODO: In production, integrate with email service
-            // await emailService.sendAchievementNotification({
-            //   to: user.email,
-            //   name: user.name,
-            //   achievements: userAchievements,
-            //   certifications: userCertifications,
-            // });
+            // Send achievement notification email if enabled
+            try {
+              if (process.env.NODE_ENV === 'production' && process.env.EMAIL_NOTIFICATIONS_ENABLED === 'true') {
+                const { sendAchievementNotification } = await import('@/lib/email');
+                await sendAchievementNotification({
+                  to: user.email,
+                  name: user.name || 'User',
+                  achievements: _userAchievements,
+                  certifications: _userCertifications,
+                });
+              }
+            } catch (emailError) {
+              console.error('Failed to send achievement notification email:', emailError);
+              // Continue processing - email failures shouldn't stop background jobs
+            }
 
             sentCount++;
           } catch (error) {

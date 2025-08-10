@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
 
 const prisma = new PrismaClient();
 
@@ -8,6 +9,9 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const includeStats = searchParams.get('includeStats') === 'true';
+    
+    // Get authenticated user for completion rate calculation
+    const authenticatedUser = includeStats ? await getAuthenticatedUser() : null;
 
     const learningPaths = await prisma.learningPath.findMany({
       where: { isActive: true },
@@ -42,11 +46,29 @@ export async function GET(request: NextRequest) {
     });
 
     // Calculate additional stats if requested
-    const enrichedPaths = learningPaths.map((path) => {
+    const enrichedPaths = await Promise.all(learningPaths.map(async (path) => {
       const lessons = path.lessons.map((pl) => pl.lesson);
       const totalEstimatedTime = lessons.reduce((sum, lesson) => sum + (lesson.estimatedTime || 0), 0);
       const publishedLessons = lessons.filter((lesson) => lesson.isPublished);
       const freeLessons = lessons.filter((lesson) => lesson.isFree);
+
+      // Calculate completion rate for authenticated users
+      let completionRate = 0;
+      if (includeStats && authenticatedUser && publishedLessons.length > 0) {
+        try {
+          const userProgress = await prisma.userProgress.findMany({
+            where: {
+              userId: authenticatedUser.id,
+              lessonId: { in: publishedLessons.map(lesson => lesson.id) },
+              status: 'completed'
+            }
+          });
+          completionRate = Math.round((userProgress.length / publishedLessons.length) * 100);
+        } catch (error) {
+          console.error(`Error calculating completion rate for path ${path.id}:`, error);
+          // Keep completion rate as 0 on error
+        }
+      }
 
       return {
         ...path,
@@ -56,11 +78,11 @@ export async function GET(request: NextRequest) {
               publishedLessons: publishedLessons.length,
               freeLessons: freeLessons.length,
               totalEstimatedTime,
-              completionRate: 0, // TODO: Calculate based on user progress
+              completionRate,
             }
           : undefined,
       };
-    });
+    }));
 
     return NextResponse.json(enrichedPaths);
   } catch (error) {
