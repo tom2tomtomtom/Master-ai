@@ -107,9 +107,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: !!session && !!user
   }
 
-  // Prevent hydration mismatches by not rendering children until mounted
+  // Prevent hydration mismatches by rendering children immediately on server
+  // The mounted state is just for client-side setup tracking
   if (!mounted) {
-    return <div style={{ display: 'none' }}>Loading...</div>
+    return (
+      <AuthContext.Provider value={{
+        user: null,
+        session: null,
+        loading: true,
+        signOut: async () => {},
+        isAuthenticated: false
+      }}>
+        {children}
+      </AuthContext.Provider>
+    )
   }
 
   return (
