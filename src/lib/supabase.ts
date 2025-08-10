@@ -40,6 +40,9 @@ export const supabase = config ? createClient(config.supabaseUrl, config.supabas
 
 // Server-side Supabase client for API routes and server components
 export const createServerSupabaseClient = (cookieStore: ReturnType<typeof cookies>) => {
+  if (!config) {
+    throw new Error('Supabase configuration missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY')
+  }
   return createServerClient(
     config.supabaseUrl,
     config.supabaseAnonKey,
@@ -61,6 +64,9 @@ export const createServerSupabaseClient = (cookieStore: ReturnType<typeof cookie
 
 // Helper function to get current user
 export async function getCurrentUser() {
+  if (!supabase) {
+    return null
+  }
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error) {
     console.error('Error getting user:', error)
@@ -71,6 +77,9 @@ export async function getCurrentUser() {
 
 // Helper function to sign out
 export async function signOut() {
+  if (!supabase) {
+    return false
+  }
   const { error } = await supabase.auth.signOut()
   if (error) {
     console.error('Error signing out:', error)
@@ -78,7 +87,11 @@ export async function signOut() {
   return !error
 }
 
-console.log('🚀 Supabase client initialized:', {
-  url: config.supabaseUrl,
-  hasAnonKey: !!config.supabaseAnonKey
-})
+if (config) {
+  console.log('🚀 Supabase client initialized:', {
+    url: config.supabaseUrl,
+    hasAnonKey: !!config.supabaseAnonKey
+  })
+} else {
+  console.warn('🚫 Supabase client not initialized: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is missing')
+}

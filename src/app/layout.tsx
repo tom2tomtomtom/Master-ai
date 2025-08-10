@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Providers } from "@/components/providers";
+import { MinimalProviders } from "@/components/providers-minimal";
 
 export const metadata: Metadata = {
   title: "Master-AI - AI Education Platform",
@@ -17,9 +17,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <Providers>
+        <MinimalProviders>
           {children}
-        </Providers>
+        </MinimalProviders>
       </body>
     </html>
   );
