@@ -291,7 +291,7 @@ describe('Security Utilities', () => {
       CSRFProtection.generateToken = jest.fn((sessionId: string) => {
         const token = 'test-token'
         const expires = Date.now() - 1000 // Expired 1 second ago
-        // @ts-ignore - accessing private property for testing
+        // @ts-expect-error - accessing private property for testing
         CSRFProtection.tokens.set(sessionId, { token, expires })
         return token
       })

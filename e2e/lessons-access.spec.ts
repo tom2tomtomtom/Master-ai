@@ -81,7 +81,7 @@ test.describe('Lessons Access with Database Fallback', () => {
     
     // Should eventually show either proper dashboard content or fallback
     // Check if it's no longer stuck in loading
-    const isStillLoading = pageContent.includes('Loading...') && pageContent.length < 1000;
+    const isStillLoading = pageContent && pageContent.includes('Loading...') && pageContent.length < 1000;
     
     if (!isStillLoading) {
       console.log('✅ Dashboard is no longer stuck in infinite loading state');

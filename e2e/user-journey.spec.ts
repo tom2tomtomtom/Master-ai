@@ -202,7 +202,7 @@ test.describe('Complete User Journey - Sign In to Lesson Completion', () => {
     if (!foundDashboardElement) {
       console.log('⚠️ Dashboard elements not found, checking page content...');
       const pageContent = await page.textContent('body');
-      console.log('Dashboard page content preview:', pageContent.substring(0, 500));
+      console.log('Dashboard page content preview:', pageContent ? pageContent.substring(0, 500) : 'No content');
     }
 
     // Step 4: Navigate to lessons - try multiple approaches

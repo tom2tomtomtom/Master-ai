@@ -119,6 +119,7 @@ export async function GET(_request: NextRequest) {
             // Add cache metadata for debugging
             _cached: false,
             _computedAt: new Date().toISOString(),
+            _fallback: false,
           };
         // }, { userId, table: 'dashboard_stats' });
       // },

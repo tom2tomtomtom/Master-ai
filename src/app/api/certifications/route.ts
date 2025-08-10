@@ -8,9 +8,9 @@ const prisma = new PrismaClient();
 // GET /api/certifications - Get available certifications and user progress
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await requireAuth();
     
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     // Get user's earned certifications
     const userCertifications = await prisma.userCertification.findMany({
       where: { 
-        userId: session.user.id,
+        userId: user.id,
         isRevoked: false,
       },
       select: {
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
         if (!isEarned && includeProgress) {
           try {
             eligibility = await certificationEngine.checkEligibility(
-              session.user.id,
+              user.id,
               cert.id
             );
           } catch (error) {
@@ -130,11 +130,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Self-awarding for eligible certifications
-    const session = await requireAuth();
+    const user = await requireAuth();
     
     // Award the certification for the current user
     const award = await certificationEngine.awardCertification(
-      session.user.id,
+      user.id,
       certificationId,
       false // Never skip eligibility check for self-awards
     );

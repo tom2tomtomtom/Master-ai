@@ -206,3 +206,19 @@ export async function logAdminAction(
 
   console.log('ADMIN_ACTION:', JSON.stringify(logEntry, null, 2));
 }
+
+/**
+ * Validates that a user can access a specific resource
+ * Used for user-specific endpoints where users can only access their own data
+ * Admins can access any user's data
+ */
+export async function requireUserResourceAccess(resourceUserId: string): Promise<ExtendedUser> {
+  const user = await getAuthenticatedUser();
+  
+  // User can access their own resources, or admin can access anyone's
+  if (user.id === resourceUserId || hasAdminRole(user)) {
+    return user;
+  }
+  
+  throw new Error('Forbidden: Cannot access this user resource');
+}

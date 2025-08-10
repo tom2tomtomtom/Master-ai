@@ -124,7 +124,8 @@ export const cleanupMocks = () => {
 
 // Assert helpers
 export const expectToHaveBeenCalledWithFetch = (url: string, options?: any) => {
-  expect(global.fetch).toHaveBeenCalledWith(url, options)
+  // Note: expect is available in test environment via jest
+  (expect as any)(global.fetch).toHaveBeenCalledWith(url, options)
 }
 
 // DOM testing helpers

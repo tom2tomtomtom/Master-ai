@@ -217,7 +217,7 @@ describe('ProfileHeader Component', () => {
     })
 
     it('should handle null props gracefully', () => {
-      // @ts-ignore - Testing runtime behavior with null values
+      // @ts-expect-error - Testing runtime behavior with null values
       render(<ProfileHeader error={null} success={null} />)
       
       expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
@@ -225,7 +225,7 @@ describe('ProfileHeader Component', () => {
     })
 
     it('should handle boolean values gracefully', () => {
-      // @ts-ignore - Testing runtime behavior with wrong types
+      // @ts-expect-error - Testing runtime behavior with wrong types
       render(<ProfileHeader error={false} success={true} />)
       
       expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
