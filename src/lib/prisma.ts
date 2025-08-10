@@ -1,7 +1,9 @@
 import { PrismaClient } from '@prisma/client'
+import { LoggedPrismaClient, prismaLoggingExtension, monitorDatabaseConnections } from './prisma-logging'
+import { appLogger } from './logger'
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+  prisma: LoggedPrismaClient | undefined
 }
 
 /**
@@ -13,27 +15,42 @@ const createPrismaClient = () => {
   try {
     const databaseUrl = validateDatabaseUrl()
     
-    return new PrismaClient({
-    log: process.env.NODE_ENV === 'development' 
-      ? ['query', 'info', 'warn', 'error'] 
-      : ['error'],
-    errorFormat: 'pretty',
-    // Enhanced configuration for Supabase + Vercel serverless
-    __internal: {
-      engine: {
-        connectTimeout: isProduction ? 30000 : 5000, // Increased to 30s for serverless
-        acquireTimeout: isProduction ? 30000 : 5000,
-        transactionOptions: {
-          maxWait: 25000, // Wait up to 25 seconds to start a transaction
-          timeout: 40000, // Allow up to 40 seconds for the transaction to complete
-        },
-      },
-    },
-    // Use validated database URL with fallback
-    datasourceUrl: databaseUrl,
-  })
+    // Create LoggedPrismaClient with enhanced logging capabilities
+    const client = new LoggedPrismaClient({
+      log: isProduction 
+        ? [{ emit: 'event', level: 'error' }]
+        : [
+            { emit: 'event', level: 'query' },
+            { emit: 'event', level: 'info' },
+            { emit: 'event', level: 'warn' },
+            { emit: 'event', level: 'error' }
+          ],
+      errorFormat: 'pretty',
+      // Use validated database URL with fallback
+      datasourceUrl: databaseUrl,
+    })
+
+    // The client already includes logging capabilities
+    const enhancedClient = client
+
+    // Log client creation
+    appLogger.system.startup({
+      component: 'prisma_client',
+      environment: process.env.NODE_ENV,
+      databaseType: databaseUrl.includes('pooler.supabase.com') ? 'supabase_pooler' : 'direct'
+    })
+
+    // Start database connection monitoring in production
+    if (isProduction) {
+      monitorDatabaseConnections(enhancedClient)
+    }
+
+    return enhancedClient
   } catch (error) {
-    console.error('❌ Failed to create Prisma client:', error)
+    appLogger.errors.unhandledError(
+      error instanceof Error ? error : new Error(String(error)), 
+      { component: 'prisma_client_creation' }
+    )
     throw error
   }
 }
@@ -44,16 +61,18 @@ function validateDatabaseUrl(): string {
   const pooledUrl = process.env.DATABASE_URL
   
   if (directUrl && directUrl.trim() !== '') {
-    console.log('🔄 Using direct database connection')
+    appLogger.info('Using direct database connection', { component: 'database_config' })
     return directUrl.trim()
   }
   
   if (pooledUrl && pooledUrl.trim() !== '') {
-    console.log('🏊 Using pooled database connection')
+    appLogger.info('Using pooled database connection', { component: 'database_config' })
     return pooledUrl.trim()
   }
   
-  throw new Error('❌ No valid DATABASE_URL or DIRECT_DATABASE_URL found')
+  const error = new Error('No valid DATABASE_URL or DIRECT_DATABASE_URL found')
+  appLogger.errors.unhandledError(error, { component: 'database_config' })
+  throw error
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient()

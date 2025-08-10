@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { withAuthLogging, ApiLogContext } from '@/lib/api-logging-middleware';
+import { appLogger } from '@/lib/logger';
 
 const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -16,12 +18,21 @@ const signupSchema = z.object({
   path: ["confirmPassword"],
 });
 
-export async function POST(request: NextRequest) {
+async function signupHandler(request: NextRequest, context: ApiLogContext) {
   try {
     const body = await request.json();
     
     // Validate input
     const validatedData = signupSchema.parse(body);
+
+    // Log signup attempt (without sensitive data)
+    appLogger.info('User signup attempt', {
+      requestId: context.requestId,
+      category: 'user_activity',
+      event: 'signup_attempt',
+      email: validatedData.email,
+      subscriptionTier: validatedData.subscriptionTier
+    });
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -29,6 +40,12 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingUser) {
+      appLogger.security.loginFailure(
+        validatedData.email,
+        'Email already exists',
+        { requestId: context.requestId, ip: request.headers.get('x-forwarded-for') || 'unknown' }
+      );
+
       return NextResponse.json(
         { error: 'User with this email already exists' },
         { status: 400 }
@@ -56,15 +73,37 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // Log successful signup
+    appLogger.security.loginSuccess(
+      { ...user, role: 'USER' } as any,
+      { 
+        requestId: context.requestId,
+        event: 'signup_success',
+        ip: request.headers.get('x-forwarded-for') || 'unknown'
+      }
+    );
+
     return NextResponse.json({
       message: 'Account created successfully',
       user,
     }, { status: 201 });
 
   } catch (error) {
-    console.error('Signup error:', error);
+    // Log the error with context
+    appLogger.errors.apiError(
+      '/api/auth/signup',
+      error instanceof Error ? error : new Error(String(error)),
+      { requestId: context.requestId },
+      context.user || undefined
+    );
     
     if (error instanceof z.ZodError) {
+      appLogger.errors.validationError(
+        '/api/auth/signup',
+        error.issues,
+        { requestId: context.requestId }
+      );
+
       return NextResponse.json(
         { 
           error: 'Validation failed',
@@ -80,3 +119,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withAuthLogging(signupHandler);

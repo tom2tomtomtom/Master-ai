@@ -116,7 +116,40 @@ export class InputValidator {
     };
   }
   
-  static sanitizeString(input: string, maxLength: number = 1000): string {
+  static sanitizeString(input: string, maxLength: number = 1000, request?: NextRequest): string {
+    const original = input;
+    
+    // Detect potential XSS attempts
+    const xssPatterns = [
+      /<script[^>]*>.*?<\/script>/gi,
+      /javascript:/gi,
+      /on\w+\s*=/gi,
+      /<iframe[^>]*>/gi,
+      /<object[^>]*>/gi,
+      /<embed[^>]*>/gi,
+      /<link[^>]*>/gi,
+      /<meta[^>]*>/gi,
+      /expression\(/gi,
+      /vbscript:/gi,
+      /data:text\/html/gi
+    ];
+    
+    const hasXSS = xssPatterns.some(pattern => pattern.test(input));
+    
+    if (hasXSS && request) {
+      // Log XSS attempt - using dynamic import to avoid circular dependency
+      import('./logger').then(({ appLogger }) => {
+        appLogger.security.xssAttemptBlocked(original, {
+          ip: request.headers.get('x-forwarded-for') || 'unknown',
+          userAgent: request.headers.get('user-agent') || 'unknown',
+          endpoint: request.nextUrl?.pathname || 'unknown'
+        });
+      }).catch(() => {
+        // Fallback logging if logger not available
+        console.warn('XSS attempt detected:', original.substring(0, 100));
+      });
+    }
+    
     // Basic HTML entity encoding and length limiting
     return input
       .replace(/&/g, '&amp;')
