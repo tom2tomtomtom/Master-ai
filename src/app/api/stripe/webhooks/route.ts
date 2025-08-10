@@ -5,6 +5,9 @@ import { prisma } from '@/lib/prisma'
 import Stripe from 'stripe'
 
 // This is critical for webhook verification
+
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs'
 
 async function verifyWebhookSignature(

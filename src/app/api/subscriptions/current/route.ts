@@ -3,6 +3,9 @@ import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware'
 import { prisma } from '@/lib/prisma'
 import { SUBSCRIPTION_TIERS } from '@/lib/stripe'
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 export async function GET(_req: NextRequest) {
   try {
     const authUser = await getAuthenticatedUser()

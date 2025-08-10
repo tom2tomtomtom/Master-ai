@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 const prisma = new PrismaClient();
 
 // GET /api/learning-paths - Get all learning paths

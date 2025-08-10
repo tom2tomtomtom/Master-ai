@@ -3,6 +3,9 @@ import { requireAdmin, logAdminAction, handleAuthError } from '@/lib/supabase-au
 import { backgroundJobSystem } from '@/lib/background-jobs';
 
 // POST /api/system/jobs - Trigger background jobs (admin only)
+
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     // Require admin access for triggering background jobs

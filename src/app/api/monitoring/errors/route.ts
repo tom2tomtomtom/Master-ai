@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { withApiLogging, ApiLogContext } from '@/lib/api-logging-middleware';
 import { appLogger } from '@/lib/logger';
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 async function errorLoggingHandler(request: NextRequest, context: ApiLogContext) {
   try {
     const body = await request.json();

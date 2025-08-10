@@ -5,6 +5,9 @@ import { z } from 'zod';
 import { withAuthLogging, ApiLogContext } from '@/lib/api-logging-middleware';
 import { appLogger } from '@/lib/logger';
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),

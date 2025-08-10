@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { checkDatabaseHealth, ensureConnection } from '@/lib/prisma';
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const startTime = Date.now();
   

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, handleAuthError } from '@/lib/supabase-auth-middleware';
 import { PrismaClient } from '@prisma/client';
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 const prisma = new PrismaClient();
 
 // GET /api/admin/stats - Get platform statistics (admin only)

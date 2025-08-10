@@ -4,6 +4,9 @@ import { stripe } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 const createPortalSessionSchema = z.object({
   returnUrl: z.string().url().optional(),
 })

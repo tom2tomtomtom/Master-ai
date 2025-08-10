@@ -3,6 +3,9 @@ import { PrismaClient } from '@prisma/client';
 import { certificationEngine } from '@/lib/certification-engine';
 import { requireAuth, requireAdmin, logAdminAction, handleAuthError } from '@/lib/supabase-auth-middleware';
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 const prisma = new PrismaClient();
 
 // GET /api/certifications - Get available certifications and user progress

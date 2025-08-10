@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getAvailableOAuthProviders } from '@/lib/auth-config';
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const providers = getAvailableOAuthProviders();

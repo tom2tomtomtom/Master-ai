@@ -3,6 +3,9 @@ import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
 import { achievementSystem } from '@/lib/achievement-system';
 
 // GET /api/achievements - Get available achievements and user progress
+
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser();

@@ -3,6 +3,9 @@ import { requireAuth, handleAuthError, requireUserResourceAccess } from '@/lib/s
 import { achievementSystem } from '@/lib/achievement-system';
 
 // GET /api/achievements/user/[userId] - Get user's achievements
+
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }

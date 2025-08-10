@@ -4,6 +4,9 @@ import { stripe, getPriceId, BillingInterval } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 const createCheckoutSessionSchema = z.object({
   tier: z.enum(['pro', 'team']),
   interval: z.enum(['month', 'year']).default('month'),

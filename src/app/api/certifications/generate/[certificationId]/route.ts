@@ -3,6 +3,9 @@ import { requireAuth } from '@/lib/supabase-auth-middleware';
 import { certificateGenerator } from '@/lib/certificate-generator';
 import { PrismaClient } from '@prisma/client';
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 const prisma = new PrismaClient();
 
 // POST /api/certifications/generate/[certificationId] - Generate PDF certificate

@@ -3,6 +3,9 @@ import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
 import { PrismaClient } from '@prisma/client';
 import { achievementSystem } from '@/lib/achievement-system';
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 const prisma = new PrismaClient();
 
 // GET /api/lessons/[id]/bookmark - Get bookmark for a lesson

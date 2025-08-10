@@ -4,7 +4,20 @@ import { cookies } from 'next/headers'
 import { PrismaClient, UserRole } from '@prisma/client';
 import type { User } from '@supabase/supabase-js'
 
-const prisma = new PrismaClient();
+// Initialize Prisma client with better error handling
+let prisma: PrismaClient | null = null;
+
+function getPrismaClient(): PrismaClient | null {
+  if (!prisma) {
+    try {
+      prisma = new PrismaClient();
+    } catch (error) {
+      console.warn('Failed to initialize Prisma client:', error);
+      return null;
+    }
+  }
+  return prisma;
+}
 
 /**
  * Custom error class for authorization failures
@@ -38,11 +51,17 @@ export interface AuthSession {
  */
 export async function getAuthenticatedUser(): Promise<ExtendedUser | null> {
   try {
+    // Check for required environment variables
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.warn('Supabase environment variables not configured for server auth');
+      return null;
+    }
+    
     const cookieStore = cookies()
     
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
       {
         cookies: {
           get(name: string) {
@@ -59,12 +78,21 @@ export async function getAuthenticatedUser(): Promise<ExtendedUser | null> {
     }
 
     // Fetch role from our database
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email! },
-      select: { 
-        role: true 
+    const prismaClient = getPrismaClient();
+    let dbUser = null;
+    
+    if (prismaClient && user.email) {
+      try {
+        dbUser = await prismaClient.user.findUnique({
+          where: { email: user.email },
+          select: { 
+            role: true 
+          }
+        });
+      } catch (error) {
+        console.warn('Failed to fetch user role from database:', error);
       }
-    });
+    }
 
     return {
       ...user,

@@ -3,6 +3,9 @@ import { requireAuth } from '@/lib/supabase-auth-middleware'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 const invoicesQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(50),
   offset: z.coerce.number().min(0).default(0),

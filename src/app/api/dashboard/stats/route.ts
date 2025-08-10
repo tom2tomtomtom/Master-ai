@@ -4,6 +4,9 @@ import { prisma, safeQuery } from '@/lib/prisma';
 // import { cacheService, CacheKeys, CacheTTL } from '@/lib/cache';
 // import { monitoredQuery } from '@/lib/db-monitor';
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 export async function GET(_request: NextRequest) {
   try {
     const user = await getAuthenticatedUser();

@@ -3,6 +3,9 @@ import { contentImporter } from '@/lib/content-importer';
 import { contentParser } from '@/lib/content-parser';
 
 // POST /api/admin/content - Trigger content import
+
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const { action } = await request.json();

@@ -3,6 +3,9 @@ import { certificationEngine } from '@/lib/certification-engine';
 import { monitoring } from '@/lib/monitoring';
 
 // GET /api/verify/[code] - Verify a certification by verification code (public endpoint)
+
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ code: string }> }

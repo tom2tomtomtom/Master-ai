@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAdminAuth } from '@/lib/supabase-auth-middleware';
 // Dynamic imports to prevent client-side bundling of server modules
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 async function loggingDashboardHandler(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const action = searchParams.get('action') || 'stats';

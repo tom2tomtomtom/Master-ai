@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Event tracking endpoint for analytics
+
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const eventData = await request.json();

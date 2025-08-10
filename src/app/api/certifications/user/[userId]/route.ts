@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireUserResourceAccess, handleAuthError } from '@/lib/supabase-auth-middleware';
 import { PrismaClient } from '@prisma/client';
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 const prisma = new PrismaClient();
 
 // GET /api/certifications/user/[userId] - Get user's certifications

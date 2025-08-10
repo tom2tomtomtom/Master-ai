@@ -3,6 +3,9 @@ import { resetPasswordSchema, AUTH_ERRORS, validatePasswordStrength } from '@/li
 import { resetPasswordWithToken } from '@/lib/password-reset';
 import { monitoring } from '@/lib/monitoring';
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

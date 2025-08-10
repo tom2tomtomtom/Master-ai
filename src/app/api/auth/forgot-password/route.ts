@@ -5,6 +5,9 @@ import { sendPasswordResetEmail, isRateLimited } from '@/lib/email';
 import { generateResetToken } from '@/lib/password-reset';
 import { monitoring } from '@/lib/monitoring';
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

@@ -3,6 +3,9 @@ import { verifyResetToken } from '@/lib/password-reset';
 import { AUTH_ERRORS } from '@/lib/validation';
 import { monitoring } from '@/lib/monitoring';
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 interface RouteContext {
   params: {
     token: string;

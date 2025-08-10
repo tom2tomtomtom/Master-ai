@@ -4,6 +4,9 @@ import { PrismaClient } from '@prisma/client';
 import { achievementSystem } from '@/lib/achievement-system';
 import { certificationEngine } from '@/lib/certification-engine';
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 const prisma = new PrismaClient();
 
 // GET /api/lessons/[id]/progress - Get lesson progress for current user

@@ -3,6 +3,9 @@ import { requireAuth } from '@/lib/supabase-auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 const deleteAccountSchema = z.object({
   confirmEmail: z.string().email('Invalid email address'),
   confirmText: z.string().refine(
