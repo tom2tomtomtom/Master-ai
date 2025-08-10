@@ -26,6 +26,17 @@ const nextConfig = {
         stream: false,
         util: false,
         buffer: false,
+        dns: false,
+        dgram: false,
+        http2: false,
+        zlib: false,
+      };
+
+      // Prevent client-side bundling of server-only modules
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@/lib/content-parser': false,
+        '@/lib/content-importer': false,
       };
     }
 

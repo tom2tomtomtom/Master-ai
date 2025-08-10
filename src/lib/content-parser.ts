@@ -1,8 +1,9 @@
 import matter from 'gray-matter';
 import { remark } from 'remark';
 import html from 'remark-html';
-import fs from 'fs';
-import path from 'path';
+// Only import fs on server side
+const fs = typeof window === 'undefined' ? require('fs') : null;
+const path = typeof window === 'undefined' ? require('path') : null;
 
 export interface LessonFrontmatter {
   title?: string;
@@ -41,6 +42,11 @@ export class ContentParser {
    * Get all lesson files from the root directory
    */
   getLessonFiles(): string[] {
+    // Only run on server side
+    if (typeof window !== 'undefined' || !fs) {
+      return [];
+    }
+    
     const files = fs.readdirSync(this.rootDir);
     return files
       .filter(file => file.startsWith('lesson-') && file.endsWith('.md'))
@@ -63,6 +69,11 @@ export class ContentParser {
    * Parse a single lesson file
    */
   async parseLesson(filename: string): Promise<ParsedLesson> {
+    // Only run on server side
+    if (typeof window !== 'undefined' || !fs || !path) {
+      throw new Error('parseLesson can only be called on the server side');
+    }
+    
     const filePath = path.join(this.rootDir, filename);
     const fileContent = fs.readFileSync(filePath, 'utf8');
     
@@ -113,6 +124,11 @@ export class ContentParser {
    * Parse all lesson files
    */
   async parseAllLessons(): Promise<ParsedLesson[]> {
+    // Only run on server side
+    if (typeof window !== 'undefined' || !fs) {
+      return [];
+    }
+    
     const files = this.getLessonFiles();
     const lessons: ParsedLesson[] = [];
 

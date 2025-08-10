@@ -109,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Prevent hydration mismatches by not rendering children until mounted
   if (!mounted) {
-    return null
+    return <div style={{ display: 'none' }}>Loading...</div>
   }
 
   return (
