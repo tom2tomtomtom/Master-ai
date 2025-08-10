@@ -8,11 +8,13 @@ function getSupabaseConfig() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl) {
-    throw new Error('NEXT_PUBLIC_SUPABASE_URL is required')
+    console.error('NEXT_PUBLIC_SUPABASE_URL is required')
+    return null
   }
 
   if (!supabaseAnonKey || supabaseAnonKey === 'your-supabase-anon-key-here') {
-    throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required. Please configure it in your environment variables.')
+    console.error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required. Please configure it in your environment variables.')
+    return null
   }
 
   return {
@@ -24,14 +26,17 @@ function getSupabaseConfig() {
 // Get Supabase configuration
 const config = getSupabaseConfig()
 
-// Client-side Supabase client
-export const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey, {
+// Client-side Supabase client with error handling
+export const supabase = config ? createClient(config.supabaseUrl, config.supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true
   }
-})
+}) : (() => {
+  console.warn('Supabase client not initialized due to missing configuration')
+  return null as any
+})()
 
 // Server-side Supabase client for API routes and server components
 export const createServerSupabaseClient = (cookieStore: ReturnType<typeof cookies>) => {

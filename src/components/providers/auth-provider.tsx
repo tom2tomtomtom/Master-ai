@@ -31,6 +31,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Get initial session
     const getInitialSession = async () => {
       try {
+        if (!supabase) {
+          console.warn('Supabase not initialized, skipping auth setup')
+          setLoading(false)
+          return
+        }
+        
         const { data: { session }, error } = await supabase.auth.getSession()
         
         if (error) {
@@ -57,6 +63,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     getInitialSession()
 
     // Listen for auth changes
+    if (!supabase) {
+      console.warn('Supabase not initialized, skipping auth state changes')
+      return () => {}
+    }
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔐 Auth state change:', event, 'user:', !!session?.user)
@@ -87,6 +98,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      if (!supabase) {
+        console.warn('Supabase not initialized, cannot sign out')
+        return
+      }
+      
       const { error } = await supabase.auth.signOut()
       if (error) {
         console.error('Sign out error:', error)
