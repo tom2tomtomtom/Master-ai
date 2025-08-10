@@ -37,6 +37,11 @@ export default function DashboardPage(): JSX.Element {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
+      if (!isAuthenticated || authLoading) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         
@@ -149,36 +154,8 @@ export default function DashboardPage(): JSX.Element {
       }
     };
 
-    if (isAuthenticated) {
-      fetchDashboardData();
-    } else {
-      // User is not authenticated, still show dashboard with default data
-      setStats({
-        totalLessons: 89,
-        completedLessons: 0,
-        inProgressLessons: 0,
-        overallCompletionPercentage: 0,
-        totalTimeSpent: 0,
-        learningStreak: 0,
-        lessonsCompletedThisWeek: 0,
-        averageSessionTime: 0,
-        certificationsEarned: 0,
-        bookmarkedLessons: 0,
-        totalNotes: 0,
-      });
-      setLearningPaths([]);
-      setRecentActivity([]);
-      setNextLesson({
-        id: 'cmdxqcoot0001wc4pco0ht9fx',
-        title: 'ChatGPT Email Mastery - Transform Your Inbox into a Productivity Powerhouse',
-        lessonNumber: 1,
-        description: 'Learn to leverage ChatGPT to revolutionize your email management and boost productivity.',
-        estimatedTime: 15,
-        difficultyLevel: 'beginner'
-      });
-      setLoading(false);
-    }
-  }, [session]);
+    fetchDashboardData();
+  }, [isAuthenticated, authLoading]);
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
