@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from './auth-provider'
+import { useRouter, usePathname } from 'next/navigation'
+import { useAuth } from '@/components/providers/safe-auth-provider'
 import { Brain } from 'lucide-react'
 
 interface ProtectedRouteProps {
@@ -13,15 +13,15 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, redirectTo = '/auth/signin' }: ProtectedRouteProps) {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     if (!loading && !user) {
-      // Redirect to sign-in page with callback URL
-      const currentPath = window.location.pathname
-      const callbackUrl = encodeURIComponent(currentPath)
+      // Redirect to sign-in page with callback URL - using Next.js usePathname hook instead of window
+      const callbackUrl = encodeURIComponent(pathname)
       router.push(`${redirectTo}?callbackUrl=${callbackUrl}`)
     }
-  }, [user, loading, router, redirectTo])
+  }, [user, loading, router, redirectTo, pathname])
 
   // Show loading spinner while checking auth
   if (loading) {
