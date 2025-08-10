@@ -291,6 +291,9 @@ export class LogRotationManager {
   }
 
   private static async performRotation() {
+    // Only perform log rotation on server side
+    if (typeof window !== 'undefined') return;
+    
     try {
       const fs = require('fs');
       const path = require('path');

@@ -12,7 +12,7 @@ const nextConfig = {
 
   // Webpack configuration to handle module loading issues
   webpack: (config, { isServer }) => {
-    // Handle OpenTelemetry instrumentation issues
+    // Handle Node.js modules in browser environment
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -20,6 +20,12 @@ const nextConfig = {
         net: false,
         tls: false,
         crypto: false,
+        path: false,
+        os: false,
+        child_process: false,
+        stream: false,
+        util: false,
+        buffer: false,
       };
     }
 
@@ -27,6 +33,9 @@ const nextConfig = {
     config.ignoreWarnings = [
       { module: /node_modules\/@prisma\/instrumentation/ },
       { module: /node_modules\/require-in-the-middle/ },
+      { module: /node_modules\/@opentelemetry/ },
+      { module: /node_modules\/@supabase\/realtime-js/ },
+      /Critical dependency: the request of a dependency is an expression/,
     ];
 
     return config;

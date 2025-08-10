@@ -47,8 +47,8 @@ export class CertificateGenerator {
     this.prisma = prisma || new PrismaClient();
     this.outputDir = path.join(process.cwd(), 'public', 'certificates');
     
-    // Ensure output directory exists
-    if (!fs.existsSync(this.outputDir)) {
+    // Ensure output directory exists (server-side only)
+    if (typeof window === 'undefined' && !fs.existsSync(this.outputDir)) {
       fs.mkdirSync(this.outputDir, { recursive: true });
     }
   }

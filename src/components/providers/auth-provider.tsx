@@ -19,8 +19,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+
     // Get initial session
     const getInitialSession = async () => {
       try {
@@ -76,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe()
     }
-  }, [])
+  }, [mounted])
 
   const signOut = async () => {
     try {
@@ -98,6 +105,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     signOut,
     isAuthenticated: !!session && !!user
+  }
+
+  // Prevent hydration mismatches by not rendering children until mounted
+  if (!mounted) {
+    return null
   }
 
   return (
