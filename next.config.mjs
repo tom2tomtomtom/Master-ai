@@ -36,10 +36,12 @@ const nextConfig = {
       config.resolve.alias = {
         ...config.resolve.alias,
         '@/lib/content-parser': false,
+        '@/lib/content-parser-client': false,
         '@/lib/content-importer': false,
         '@/lib/logging-config': false,
         '@/lib/certificate-generator': false,
         '@/lib/prisma-logging': false,
+        '@/lib/security': false,
         'fs': false,
         'path': false,
         'os': false,
