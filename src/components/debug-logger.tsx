@@ -1,9 +1,18 @@
 'use client'
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function DebugLogger() {
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // Only run on client after mount to prevent hydration issues
+    if (!mounted || typeof window === 'undefined') return;
+
     // Log all unhandled errors
     const handleError = (event: ErrorEvent) => {
       console.error('🚨 UNHANDLED ERROR:', {
@@ -54,7 +63,7 @@ export default function DebugLogger() {
       window.removeEventListener('error', handleError);
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
-  }, []);
+  }, [mounted]);
 
   return null;
 }
