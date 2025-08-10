@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware'
-import { authOptions } from '@/lib/auth'
 import { stripe } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
@@ -30,7 +29,7 @@ export async function POST(req: NextRequest) {
     const { cancelAtPeriodEnd, reason } = cancelSubscriptionSchema.parse(body)
 
     // Get user with current subscription
-    const user = await prisma.user.findUnique({
+    const dbUser = await prisma.user.findUnique({
       where: { id: user.id },
       include: {
         stripeSubscriptions: {
@@ -47,11 +46,11 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const currentSubscription = user.stripeSubscriptions[0]
+    const currentSubscription = dbUser.stripeSubscriptions[0]
 
     if (!currentSubscription) {
       return NextResponse.json(
@@ -144,7 +143,7 @@ export async function PATCH(_req: NextRequest) {
     }
 
     // Get user with current subscription
-    const user = await prisma.user.findUnique({
+    const dbUser = await prisma.user.findUnique({
       where: { id: user.id },
       include: {
         stripeSubscriptions: {
@@ -162,11 +161,11 @@ export async function PATCH(_req: NextRequest) {
       }
     })
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const currentSubscription = user.stripeSubscriptions[0]
+    const currentSubscription = dbUser.stripeSubscriptions[0]
 
     if (!currentSubscription) {
       return NextResponse.json(

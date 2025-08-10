@@ -189,7 +189,10 @@ export async function testLoggingSystem(): Promise<{ success: boolean; errors: s
     appLogger.debug('Logging system test: debug level');
     appLogger.info('Logging system test: info level');
     appLogger.warn('Logging system test: warn level');
-    appLogger.error('Logging system test: error level');
+    appLogger.errors.unhandledError(new Error('Logging system test: error level'), {
+      test: true,
+      level: 'error'
+    });
 
     // Test structured logging
     appLogger.security.loginSuccess(

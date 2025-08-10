@@ -98,7 +98,7 @@ export function withApiLogging<T extends any[]>(
       error = handlerError instanceof Error ? handlerError : new Error(String(handlerError));
       
       // Log the error
-      appLogger.errors.apiError(endpoint, error, { requestId, ...requestMeta }, user);
+      appLogger.errors.apiError(endpoint, error, { requestId, ...requestMeta }, user || undefined);
       
       // Return error response
       response = NextResponse.json(

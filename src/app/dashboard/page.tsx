@@ -42,10 +42,10 @@ export default function DashboardPage(): JSX.Element {
         
         // Fetch all dashboard data in parallel with error handling for each
         const [statsRes, progressRes, activityRes, nextLessonRes] = await Promise.allSettled([
-          fetch('/api/dashboard/stats').catch(e => ({ ok: false, error: e })),
-          fetch('/api/dashboard/progress').catch(e => ({ ok: false, error: e })),
-          fetch('/api/dashboard/recent-activity').catch(e => ({ ok: false, error: e })),
-          fetch('/api/dashboard/next-lesson').catch(e => ({ ok: false, error: e })),
+          fetch('/api/dashboard/stats'),
+          fetch('/api/dashboard/progress'),
+          fetch('/api/dashboard/recent-activity'),
+          fetch('/api/dashboard/next-lesson'),
         ]);
 
         // Handle stats response

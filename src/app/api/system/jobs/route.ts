@@ -6,13 +6,13 @@ import { backgroundJobSystem } from '@/lib/background-jobs';
 export async function POST(request: NextRequest) {
   try {
     // Require admin access for triggering background jobs
-    const session = await requireAdmin();
+    const user = await requireAdmin();
 
     const body = await request.json();
     const { jobType = 'daily' } = body;
 
     // Log admin action for audit purposes
-    await logAdminAction(session, 'TRIGGER_BACKGROUND_JOBS', {
+    await logAdminAction(user, 'TRIGGER_BACKGROUND_JOBS', {
       jobType,
       timestamp: new Date().toISOString()
     });
@@ -36,9 +36,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       jobType,
       triggeredBy: {
-        userId: session.user.id,
-        email: session.user.email,
-        role: session.user.role
+        userId: user.id,
+        email: user.email,
+        role: user.role
       },
       ...result,
     });

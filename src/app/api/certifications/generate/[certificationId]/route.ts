@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { requireAuth } from '@/lib/supabase-auth-middleware';
 import { certificateGenerator } from '@/lib/certificate-generator';
 import { PrismaClient } from '@prisma/client';
 
@@ -12,14 +11,7 @@ export async function POST(
   { params }: { params: Promise<{ certificationId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
 
     const resolvedParams = await params;
     const userCertificationId = resolvedParams.certificationId;
@@ -41,7 +33,7 @@ export async function POST(
     }
 
     // Verify ownership
-    if (userCertification.userId !== session.user.id) {
+    if (userCertification.userId !== user.id) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }

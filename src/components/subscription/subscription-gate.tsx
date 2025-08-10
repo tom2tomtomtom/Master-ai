@@ -18,7 +18,7 @@ import {
 import { SUBSCRIPTION_TIERS, SubscriptionTier } from '@/lib/stripe'
 import { getUpgradeMessage, FeatureKey } from '@/lib/subscription-access'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/components/providers/auth-provider'
 
 interface SubscriptionGateProps {
   feature: FeatureKey
@@ -59,7 +59,7 @@ export function SubscriptionGate({
 }: SubscriptionGateProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(showDialog)
   const router = useRouter()
-  const { data: session } = useSession()
+  const { user } = useAuth()
 
   const requiredTierConfig = SUBSCRIPTION_TIERS[requiredTier]
   const RequiredIcon = tierIcons[requiredTier]
@@ -67,7 +67,7 @@ export function SubscriptionGate({
   const defaultDescription = description || getUpgradeMessage(feature, currentTier)
 
   const handleUpgrade = () => {
-    if (!session) {
+    if (!user) {
       router.push('/auth/signin?callbackUrl=' + encodeURIComponent(window.location.href))
       return
     }

@@ -215,10 +215,14 @@ export async function logAdminAction(
 export async function requireUserResourceAccess(resourceUserId: string): Promise<ExtendedUser> {
   const user = await getAuthenticatedUser();
   
+  if (!user) {
+    throw new AuthorizationError('Authentication required', 401);
+  }
+  
   // User can access their own resources, or admin can access anyone's
   if (user.id === resourceUserId || hasAdminRole(user)) {
     return user;
   }
   
-  throw new Error('Forbidden: Cannot access this user resource');
+  throw new AuthorizationError('Forbidden: Cannot access this user resource');
 }

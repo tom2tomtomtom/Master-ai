@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PricingCard } from './pricing-card'
 import { SUBSCRIPTION_TIERS, BillingInterval } from '@/lib/stripe'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/components/providers/auth-provider'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
 
@@ -31,11 +31,11 @@ export function PricingSection({
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('month')
   const [teamQuantity, setTeamQuantity] = useState(1)
   const [loading, setLoading] = useState(false)
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const router = useRouter()
 
   const handleUpgrade = async (tier: string, interval: BillingInterval, quantity?: number) => {
-    if (!session) {
+    if (!user) {
       router.push(`/auth/signin?callbackUrl=${encodeURIComponent(window.location.href)}`)
       return
     }

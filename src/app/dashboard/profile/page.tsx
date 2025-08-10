@@ -100,7 +100,7 @@ export default function ProfilePage(): JSX.Element {
         
         <SubscriptionSection profile={profile} />
         
-        <PasswordChangeSection profile={profile} />
+        <PasswordChangeSection profile={{ ...profile, accounts: [] }} />
         
         <DangerZoneSection
           profile={profile}

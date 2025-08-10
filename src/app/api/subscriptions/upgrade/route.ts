@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware'
-import { authOptions } from '@/lib/auth'
 import { stripe, getPriceId, BillingInterval } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
@@ -32,7 +31,7 @@ export async function POST(req: NextRequest) {
     const { tier, interval, quantity, prorationBehavior } = upgradeSubscriptionSchema.parse(body)
 
     // Get user with current subscription
-    const user = await prisma.user.findUnique({
+    const dbUser = await prisma.user.findUnique({
       where: { id: user.id },
       include: {
         stripeCustomer: true,
@@ -50,18 +49,18 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    if (!user.stripeCustomer) {
+    if (!dbUser.stripeCustomer) {
       return NextResponse.json(
         { error: 'No Stripe customer found. Please create a subscription first.' },
         { status: 400 }
       )
     }
 
-    const currentSubscription = user.stripeSubscriptions[0]
+    const currentSubscription = dbUser.stripeSubscriptions[0]
 
     if (!currentSubscription) {
       return NextResponse.json(

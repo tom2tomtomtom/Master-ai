@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { requireAuth } from '@/lib/supabase-auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -14,28 +13,21 @@ const deleteAccountSchema = z.object({
 
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
 
     const body = await request.json();
     const validatedData = deleteAccountSchema.parse(body);
 
     // Get user to verify email
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
       select: {
         id: true,
         email: true,
       }
     });
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
@@ -43,7 +35,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Verify email matches
-    if (user.email !== validatedData.confirmEmail) {
+    if (dbUser.email !== validatedData.confirmEmail) {
       return NextResponse.json(
         { error: 'Email confirmation does not match your account email' },
         { status: 400 }
@@ -52,7 +44,7 @@ export async function DELETE(request: NextRequest) {
 
     // Delete user and all related data (cascade will handle relationships)
     await prisma.user.delete({
-      where: { id: session.user.id }
+      where: { id: user.id }
     });
 
     return NextResponse.json({

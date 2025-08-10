@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // External packages for server-side rendering
-  serverExternalPackages: ['@prisma/client'],
-
   // Ignore ESLint errors during build
   eslint: {
     ignoreDuringBuilds: true,
@@ -43,5 +40,6 @@ const nextConfig = {
 };
 
 export default nextConfig;
+
 
 

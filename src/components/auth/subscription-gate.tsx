@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/components/providers/auth-provider';
 import { useRouter } from 'next/navigation';
 import { ReactNode } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -56,10 +56,10 @@ export function SubscriptionGate({
   fallback,
   redirectTo = '/pricing'
 }: SubscriptionGateProps) {
-  const { data: session, status } = useSession();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
-  if (status === 'loading') {
+  if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-pulse text-center">
@@ -70,12 +70,12 @@ export function SubscriptionGate({
     );
   }
 
-  if (!session) {
+  if (!user) {
     router.push('/auth/signin');
     return null;
   }
 
-  const userTier = session.user.subscriptionTier || 'free';
+  const userTier = 'free'; // TODO: Get from user subscription data
   const userTierLevel = tierHierarchy[userTier as keyof typeof tierHierarchy];
   const requiredTierLevel = tierHierarchy[requiredTier];
 
@@ -185,11 +185,11 @@ export function SubscriptionGate({
 
 // Helper hook for checking subscription access
 export function useSubscriptionAccess(requiredTier: keyof typeof tierHierarchy) {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   
-  if (!session) return false;
+  if (!user) return false;
   
-  const userTier = session.user.subscriptionTier || 'free';
+  const userTier = 'free'; // TODO: Get from user subscription data
   const userTierLevel = tierHierarchy[userTier as keyof typeof tierHierarchy];
   const requiredTierLevel = tierHierarchy[requiredTier];
   

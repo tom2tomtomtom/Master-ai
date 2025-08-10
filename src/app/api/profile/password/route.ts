@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { requireAuth } from '@/lib/supabase-auth-middleware';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
@@ -16,21 +15,14 @@ const changePasswordSchema = z.object({
 
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
 
     const body = await request.json();
     const validatedData = changePasswordSchema.parse(body);
 
     // Get current user with password
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
       select: {
         id: true,
         password: true,
@@ -42,7 +34,7 @@ export async function PATCH(request: NextRequest) {
       }
     });
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
@@ -50,7 +42,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Check if user has a password (not OAuth-only account)
-    if (!user.password) {
+    if (!dbUser.password) {
       return NextResponse.json(
         { error: 'Cannot change password for OAuth-only accounts. Please set a password first.' },
         { status: 400 }
@@ -60,7 +52,7 @@ export async function PATCH(request: NextRequest) {
     // Verify current password
     const isCurrentPasswordValid = await bcrypt.compare(
       validatedData.currentPassword,
-      user.password
+      dbUser.password
     );
 
     if (!isCurrentPasswordValid) {
@@ -75,7 +67,7 @@ export async function PATCH(request: NextRequest) {
 
     // Update password
     await prisma.user.update({
-      where: { id: session.user.id },
+      where: { id: user.id },
       data: {
         password: hashedNewPassword,
         updatedAt: new Date(),

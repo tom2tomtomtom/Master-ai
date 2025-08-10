@@ -145,7 +145,8 @@ export class LoggedPrismaClient extends PrismaClient {
   private setupEventListeners() {
     // Query logging  
     try {
-      this.$on('query', (e: any) => {
+      // Use type assertion to handle Prisma event types
+      (this as any).$on('query', (e: any) => {
         const duration = Number(e.duration);
         
         if (duration > 100) { // Log queries taking more than 100ms
@@ -167,7 +168,7 @@ export class LoggedPrismaClient extends PrismaClient {
 
     // Error logging
     try {
-      this.$on('error', (e: any) => {
+      (this as any).$on('error', (e: any) => {
         appLogger.logError('Prisma error', {
           category: 'database',
           event: 'prisma_error',
@@ -183,7 +184,7 @@ export class LoggedPrismaClient extends PrismaClient {
 
     // Warning logging
     try {
-      this.$on('warn', (e: any) => {
+      (this as any).$on('warn', (e: any) => {
         appLogger.warn('Prisma warning', {
           category: 'database',
           event: 'prisma_warning',
@@ -199,7 +200,7 @@ export class LoggedPrismaClient extends PrismaClient {
 
     // Info logging
     try {
-      this.$on('info', (e: any) => {
+      (this as any).$on('info', (e: any) => {
         appLogger.info('Prisma info', {
           category: 'database',
           event: 'prisma_info',

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { requireAuth } from '@/lib/supabase-auth-middleware'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
@@ -11,11 +10,7 @@ const invoicesQuerySchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
 
     const { searchParams } = new URL(req.url)
     const { limit, offset } = invoicesQuerySchema.parse({
@@ -27,7 +22,7 @@ export async function GET(req: NextRequest) {
     const [invoices, totalCount] = await Promise.all([
       prisma.stripeInvoice.findMany({
         where: {
-          userId: session.user.id,
+          userId: user.id,
         },
         orderBy: {
           createdAt: 'desc',
@@ -37,7 +32,7 @@ export async function GET(req: NextRequest) {
       }),
       prisma.stripeInvoice.count({
         where: {
-          userId: session.user.id,
+          userId: user.id,
         },
       }),
     ])

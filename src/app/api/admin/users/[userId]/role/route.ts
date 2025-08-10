@@ -10,7 +10,7 @@ export async function PUT(
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const session = await requireAdmin();
+    const user = await requireAdmin();
     const resolvedParams = await params;
     const targetUserId = resolvedParams.userId;
 
@@ -40,7 +40,7 @@ export async function PUT(
 
     // Security checks
     // 1. Cannot modify own role
-    if (targetUserId === session.user.id) {
+    if (targetUserId === user.id) {
       return NextResponse.json(
         { error: 'Cannot modify your own role' },
         { status: 403 }
@@ -48,7 +48,7 @@ export async function PUT(
     }
 
     // 2. Only SUPER_ADMIN can promote to SUPER_ADMIN
-    if (role === UserRole.SUPER_ADMIN && !hasSuperAdminRole(session)) {
+    if (role === UserRole.SUPER_ADMIN && !hasSuperAdminRole(user)) {
       return NextResponse.json(
         { error: 'Only super admins can assign super admin role' },
         { status: 403 }
@@ -56,7 +56,7 @@ export async function PUT(
     }
 
     // 3. Only SUPER_ADMIN can demote other SUPER_ADMIN users
-    if (targetUser.role === UserRole.SUPER_ADMIN && !hasSuperAdminRole(session)) {
+    if (targetUser.role === UserRole.SUPER_ADMIN && !hasSuperAdminRole(user)) {
       return NextResponse.json(
         { error: 'Only super admins can modify super admin roles' },
         { status: 403 }
@@ -77,7 +77,7 @@ export async function PUT(
     });
 
     // Log admin action
-    await logAdminAction(session, 'UPDATE_USER_ROLE', {
+    await logAdminAction(user, 'UPDATE_USER_ROLE', {
       targetUserId,
       targetUserEmail: targetUser.email,
       previousRole: targetUser.role,

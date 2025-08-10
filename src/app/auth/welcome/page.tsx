@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/components/providers/auth-provider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -82,18 +82,18 @@ const features = [
 ];
 
 export default function WelcomePage() {
-  const { data: session, status } = useSession();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
+    if (!loading && !user) {
       router.push('/auth/signin');
     }
-  }, [status, router]);
+  }, [loading, user, router]);
 
-  if (status === 'loading') {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="animate-pulse text-center">
@@ -104,7 +104,7 @@ export default function WelcomePage() {
     );
   }
 
-  if (!session) {
+  if (!user) {
     return null;
   }
 
@@ -116,7 +116,7 @@ export default function WelcomePage() {
     }
   };
 
-  const subscriptionTier = session.user.subscriptionTier || 'free';
+  const subscriptionTier = 'free'; // TODO: Get from user data
   const isFreeTier = subscriptionTier === 'free';
 
   return (
@@ -131,7 +131,7 @@ export default function WelcomePage() {
             </div>
             
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Welcome to Master-AI, {session.user.name?.split(' ')[0] || 'there'}! 🎉
+              Welcome to Master-AI, {(user as any).name?.split(' ')[0] || 'there'}! 🎉
             </h1>
             
             <p className="text-xl text-gray-600 mb-6">

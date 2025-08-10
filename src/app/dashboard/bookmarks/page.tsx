@@ -66,8 +66,7 @@ export default function BookmarksPage() {
         if (typeof window !== 'undefined') {
           // Client-side error logging
           const { clientLogger } = await import('@/lib/client-logger');
-          clientLogger.error('Failed to fetch bookmarks', {
-            error: error instanceof Error ? error.message : 'Unknown error',
+          clientLogger.logError('Failed to fetch bookmarks', error, {
             component: 'BookmarksPage',
             action: 'fetchBookmarks'
           });

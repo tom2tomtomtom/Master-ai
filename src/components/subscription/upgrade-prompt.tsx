@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { SUBSCRIPTION_TIERS, SubscriptionTier } from '@/lib/stripe'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/components/providers/auth-provider'
 
 interface UpgradePromptProps {
   currentTier: SubscriptionTier
@@ -52,13 +52,13 @@ export function UpgradePrompt({
 }: UpgradePromptProps) {
   const [isDismissed, setIsDismissed] = useState(false)
   const router = useRouter()
-  const { data: session } = useSession()
+  const { user } = useAuth()
 
   const targetTierConfig = SUBSCRIPTION_TIERS[targetTier]
   const TargetIcon = tierIcons[targetTier]
 
   const handleUpgrade = () => {
-    if (!session) {
+    if (!user) {
       router.push('/auth/signin?callbackUrl=' + encodeURIComponent(window.location.href))
       return
     }

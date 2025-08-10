@@ -116,24 +116,24 @@ export async function DELETE(
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const session = await requireAdmin();
+    const adminUser = await requireAdmin();
     const resolvedParams = await params;
     const targetUserId = resolvedParams.userId;
 
     // Cannot delete own account
-    if (targetUserId === session.user.id) {
+    if (targetUserId === adminUser.id) {
       return NextResponse.json(
         { error: 'Cannot delete your own account' },
         { status: 403 }
       );
     }
 
-    const user = await prisma.user.findUnique({
+    const targetUser = await prisma.user.findUnique({
       where: { id: targetUserId },
       select: { id: true, email: true, role: true }
     });
 
-    if (!user) {
+    if (!targetUser) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
@@ -146,10 +146,10 @@ export async function DELETE(
     const { reason } = body;
 
     // Log admin action
-    await logAdminAction(session, 'DEACTIVATE_USER', {
+    await logAdminAction(adminUser, 'DEACTIVATE_USER', {
       targetUserId,
-      targetUserEmail: user.email,
-      targetUserRole: user.role,
+      targetUserEmail: targetUser.email,
+      targetUserRole: targetUser.role,
       reason: reason || 'No reason provided'
     });
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { signIn } from 'next-auth/react';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { monitoring } from '@/lib/monitoring';
@@ -74,22 +74,21 @@ export function OAuthButton({ provider, callbackUrl, className }: OAuthButtonPro
     
     setIsLoading(true);
     try {
-      const result = await signIn(provider, { 
-        callbackUrl: callbackUrl || '/dashboard',
-        redirect: false
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: provider,
+        options: {
+          redirectTo: `${window.location.origin}${callbackUrl || '/dashboard'}`
+        }
       });
       
-      if (result?.error) {
-        console.error(`${provider} OAuth error:`, result.error);
-        monitoring.logError('oauth_signin_error', result.error, {
+      if (error) {
+        console.error(`${provider} OAuth error:`, error);
+        monitoring.logError('oauth_signin_error', error, {
           provider,
           callbackUrl,
         });
         // Redirect to signin with error
         window.location.href = `/auth/signin?error=OAuthCallback&callbackUrl=${encodeURIComponent(callbackUrl || '/dashboard')}`;
-      } else if (result?.ok) {
-        // Success - redirect to callback URL
-        window.location.href = result.url || callbackUrl || '/dashboard';
       }
     } catch (error) {
       console.error(`${provider} OAuth error:`, error);

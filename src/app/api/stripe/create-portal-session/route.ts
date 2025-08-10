@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { requireAuth } from '@/lib/supabase-auth-middleware'
 import { stripe } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
@@ -19,28 +18,24 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
 
     const body = await req.json()
     const { returnUrl } = createPortalSessionSchema.parse(body)
 
     // Get user from database
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
       include: {
         stripeCustomer: true,
       },
     })
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    if (!user.stripeCustomer) {
+    if (!dbUser.stripeCustomer) {
       return NextResponse.json(
         { error: 'No Stripe customer found. Please create a subscription first.' },
         { status: 400 }
@@ -53,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     // Create billing portal session
     const portalSession = await stripe.billingPortal.sessions.create({
-      customer: user.stripeCustomer.stripeCustomerId,
+      customer: dbUser.stripeCustomer.stripeCustomerId,
       return_url: returnUrl || defaultReturnUrl,
     })
 

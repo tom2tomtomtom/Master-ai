@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { CheckCircle, Crown, Users, Zap, Loader2 } from 'lucide-react'
 import { SUBSCRIPTION_TIERS, BillingInterval } from '@/lib/stripe'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/components/providers/auth-provider'
 
 interface PricingCardProps {
   tier: keyof typeof SUBSCRIPTION_TIERS
@@ -44,7 +44,7 @@ export function PricingCard({
 }: PricingCardProps) {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const tierConfig = SUBSCRIPTION_TIERS[tier]
   const Icon = tierIcons[tier]
 
@@ -84,7 +84,7 @@ export function PricingCard({
     if (isLoading || loading) return
 
     // If not authenticated, redirect to sign up
-    if (!session) {
+    if (!user) {
       const planParam = tier !== 'free' ? `?plan=${tier}` : ''
       router.push(`/auth/signup${planParam}`)
       return
@@ -126,7 +126,7 @@ export function PricingCard({
       return 'Manage Subscription'
     }
     
-    if (!session) {
+    if (!user) {
       return tier === 'free' ? 'Get Started Free' : 'Start Free Trial'
     }
     

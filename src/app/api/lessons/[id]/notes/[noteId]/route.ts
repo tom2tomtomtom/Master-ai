@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { requireAuth } from '@/lib/supabase-auth-middleware';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -11,14 +10,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; noteId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
 
     const body = await request.json();
     const { content, timestamp } = body;
@@ -43,7 +35,7 @@ export async function PUT(
       );
     }
 
-    if (existingNote.userId !== session.user.id) {
+    if (existingNote.userId !== user.id) {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
@@ -75,14 +67,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; noteId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
 
     const resolvedParams = await params;
     // Check if note exists and belongs to the user
@@ -97,7 +82,7 @@ export async function DELETE(
       );
     }
 
-    if (existingNote.userId !== session.user.id) {
+    if (existingNote.userId !== user.id) {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }

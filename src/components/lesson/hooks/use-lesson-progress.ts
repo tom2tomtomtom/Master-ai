@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/components/providers/auth-provider';
 import { calculateReadingProgress } from '@/lib/markdown';
 
 interface UserProgress {
@@ -17,7 +17,7 @@ interface UseLessonProgressProps {
 }
 
 export function useLessonProgress({ lessonId, onCompletionModalShow }: UseLessonProgressProps) {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [progress, setProgress] = useState<UserProgress | null>(null);
   const [readingProgress, setReadingProgress] = useState(0);
   const [timeSpent, setTimeSpent] = useState(0);
@@ -62,7 +62,7 @@ export function useLessonProgress({ lessonId, onCompletionModalShow }: UseLesson
   };
 
   const updateProgress = async (progressPercentage: number) => {
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     try {
       const currentTimeSpent = Math.floor((Date.now() - startTimeRef.current) / 60000);

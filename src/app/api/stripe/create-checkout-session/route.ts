@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { requireAuth } from '@/lib/supabase-auth-middleware'
 import { stripe, getPriceId, BillingInterval } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
@@ -23,26 +22,22 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
 
     const body = await req.json()
     const { tier, interval, quantity, successUrl, cancelUrl } = createCheckoutSessionSchema.parse(body)
 
     // Get user from database
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
     })
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
     // Check if user already has an active subscription
-    if (user.subscriptionStatus === 'active' && user.subscriptionTier !== 'free') {
+    if (dbUser.subscriptionStatus === 'active' && dbUser.subscriptionTier !== 'free') {
       return NextResponse.json(
         { error: 'User already has an active subscription' },
         { status: 400 }
@@ -60,7 +55,7 @@ export async function POST(req: NextRequest) {
 
     // Create or retrieve Stripe customer
     const stripeCustomer = await prisma.stripeCustomer.findUnique({
-      where: { userId: user.id },
+      where: { userId: dbUser.id },
     })
 
     let customerId: string
@@ -70,10 +65,10 @@ export async function POST(req: NextRequest) {
     } else {
       // Create new Stripe customer
       const customer = await stripe.customers.create({
-        email: user.email,
-        name: user.name || undefined,
+        email: dbUser.email,
+        name: dbUser.name || undefined,
         metadata: {
-          userId: user.id,
+          userId: dbUser.id,
         },
       })
 
@@ -82,15 +77,15 @@ export async function POST(req: NextRequest) {
       // Save customer to database
       await prisma.stripeCustomer.create({
         data: {
-          userId: user.id,
+          userId: dbUser.id,
           stripeCustomerId: customerId,
-          email: user.email,
+          email: dbUser.email,
         },
       })
 
       // Update user with Stripe customer ID
       await prisma.user.update({
-        where: { id: user.id },
+        where: { id: dbUser.id },
         data: { stripeCustomerId: customerId },
       })
     }
@@ -119,14 +114,14 @@ export async function POST(req: NextRequest) {
         name: 'auto',
       },
       metadata: {
-        userId: user.id,
+        userId: dbUser.id,
         tier,
         interval,
         quantity: quantity.toString(),
       },
       subscription_data: {
         metadata: {
-          userId: user.id,
+          userId: dbUser.id,
           tier,
           interval,
         },
@@ -137,7 +132,7 @@ export async function POST(req: NextRequest) {
     if (tier === 'pro' && interval === 'month') {
       // Check if user has ever had a subscription
       const hasHadSubscription = await prisma.stripeSubscription.findFirst({
-        where: { userId: user.id },
+        where: { userId: dbUser.id },
       })
 
       if (!hasHadSubscription) {
