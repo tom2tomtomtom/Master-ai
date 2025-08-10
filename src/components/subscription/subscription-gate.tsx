@@ -18,7 +18,7 @@ import {
 import { SUBSCRIPTION_TIERS, SubscriptionTier } from '@/lib/stripe'
 import { getUpgradeMessage, FeatureKey } from '@/lib/subscription-access'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/components/providers/auth-provider'
+import { useAuth } from '@/components/providers/safe-auth-provider'
 
 interface SubscriptionGateProps {
   feature: FeatureKey

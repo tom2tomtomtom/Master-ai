@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/components/providers/auth-provider';
+import { useAuth } from '@/components/providers/safe-auth-provider';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';

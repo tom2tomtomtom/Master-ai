@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/components/providers/auth-provider'
+import { useAuth } from '@/components/providers/safe-auth-provider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,15 +25,26 @@ export function SupabaseAuthClean({ mode = 'signin', redirectTo = '/dashboard' }
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [mounted, setMounted] = useState(false)
   
   const router = useRouter()
   const { isAuthenticated } = useAuth()
   const isSignUp = mode === 'signup'
 
-  // Redirect if already authenticated
-  if (isAuthenticated) {
-    router.push(redirectTo)
-    return null
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Redirect if already authenticated (only after mounting)
+  useEffect(() => {
+    if (mounted && isAuthenticated) {
+      router.push(redirectTo)
+    }
+  }, [mounted, isAuthenticated, router, redirectTo])
+
+  // Don't render until mounted to prevent SSR issues
+  if (!mounted) {
+    return <div>Loading...</div>
   }
 
   // Handle email/password authentication

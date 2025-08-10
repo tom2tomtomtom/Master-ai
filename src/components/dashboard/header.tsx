@@ -1,7 +1,7 @@
 'use client';
 
 import { Bell, ChevronDown, User, CreditCard, Settings, LogOut, Crown } from 'lucide-react';
-import { useAuth } from '@/components/providers/auth-provider';
+import { useAuth } from '@/components/providers/safe-auth-provider';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';

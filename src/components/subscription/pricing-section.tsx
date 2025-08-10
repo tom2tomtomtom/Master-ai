@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PricingCard } from './pricing-card'
 import { SUBSCRIPTION_TIERS, BillingInterval } from '@/lib/stripe'
-import { useAuth } from '@/components/providers/auth-provider'
+import { useAuth } from '@/components/providers/safe-auth-provider'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
 

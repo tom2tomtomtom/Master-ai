@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useAuth } from '@/components/providers/auth-provider';
+import { useAuth } from '@/components/providers/safe-auth-provider';
 import { calculateReadingProgress } from '@/lib/markdown';
 
 interface UserProgress {

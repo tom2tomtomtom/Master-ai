@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { CheckCircle, Crown, Users, Zap, Loader2 } from 'lucide-react'
 import { SUBSCRIPTION_TIERS, BillingInterval } from '@/lib/stripe'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/components/providers/auth-provider'
+import { useAuth } from '@/components/providers/safe-auth-provider'
 
 interface PricingCardProps {
   tier: keyof typeof SUBSCRIPTION_TIERS

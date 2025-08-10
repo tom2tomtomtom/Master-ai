@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import ErrorBoundary from "@/components/error-boundary";
+import DebugLogger from "@/components/debug-logger";
 
 export const metadata: Metadata = {
   title: "Master-AI - AI Education Platform",
@@ -15,9 +17,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <Providers>
-          {children}
-        </Providers>
+        <ErrorBoundary>
+          <DebugLogger />
+          <Providers>
+            {children}
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   );

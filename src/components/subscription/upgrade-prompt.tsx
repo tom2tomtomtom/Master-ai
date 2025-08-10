@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { SUBSCRIPTION_TIERS, SubscriptionTier } from '@/lib/stripe'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/components/providers/auth-provider'
+import { useAuth } from '@/components/providers/safe-auth-provider'
 
 interface UpgradePromptProps {
   currentTier: SubscriptionTier
