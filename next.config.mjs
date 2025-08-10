@@ -37,7 +37,19 @@ const nextConfig = {
         ...config.resolve.alias,
         '@/lib/content-parser': false,
         '@/lib/content-importer': false,
+        '@/lib/logging-config': false,
+        '@/lib/certificate-generator': false,
       };
+
+      // Add externals to completely prevent bundling of problematic modules
+      config.externals = config.externals || [];
+      config.externals.push({
+        'fs': 'commonjs fs',
+        'path': 'commonjs path',
+        'os': 'commonjs os',
+        'crypto': 'commonjs crypto',
+        'child_process': 'commonjs child_process'
+      });
     }
 
     // Ignore warnings for dynamic requires in Prisma/OpenTelemetry
