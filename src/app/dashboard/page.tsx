@@ -336,15 +336,15 @@ export default function DashboardPage(): JSX.Element {
                 </Button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {learningPaths.slice(0, 4).map((path) => (
+                {(learningPaths || []).slice(0, 4).map((path) => (
                   <LearningPathCard key={path.id} path={path} />
                 ))}
               </div>
-              {learningPaths.length > 4 && (
+              {(learningPaths || []).length > 4 && (
                 <div className="mt-4 text-center">
                   <Button variant="outline" asChild>
                     <Link href="/dashboard/paths">
-                      View {learningPaths.length - 4} More Learning Paths
+                      View {(learningPaths || []).length - 4} More Learning Paths
                     </Link>
                   </Button>
                 </div>
