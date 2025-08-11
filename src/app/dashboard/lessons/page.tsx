@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { prisma, safeQuery } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { DashboardLayout } from '@/components/dashboard/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,91 +7,55 @@ import { Button } from '@/components/ui/button';
 import { Clock, BookOpen, Star } from 'lucide-react';
 
 async function getLessons() {
-  const fallbackLessons = [
-    {
-      id: 'lesson-0-fallback',
-      lessonNumber: 0,
-      title: 'AI Tool Selection Guide - Choose the Right AI for Every Task',
-      description: 'Learn how to select the perfect AI tool for your specific needs and maximize productivity.',
-      estimatedTime: 15,
-      difficultyLevel: 'Beginner',
-      isFree: true,
-      tools: ['ChatGPT', 'Claude', 'Gemini'],
-    },
-    {
-      id: 'lesson-1-fallback',
-      lessonNumber: 1,
-      title: 'ChatGPT Email Mastery - Transform Your Inbox into a Productivity Powerhouse',
-      description: 'Master email communication with ChatGPT to write professional emails, automate responses, and manage your inbox efficiently.',
-      estimatedTime: 25,
-      difficultyLevel: 'Beginner',
-      isFree: true,
-      tools: ['ChatGPT'],
-    },
-    {
-      id: 'lesson-2-fallback',
-      lessonNumber: 2,
-      title: 'ChatGPT Research Mastery - From Search to Synthesis',
-      description: 'Learn advanced research techniques with ChatGPT to gather, analyze, and synthesize information effectively.',
-      estimatedTime: 30,
-      difficultyLevel: 'Beginner',
-      isFree: true,
-      tools: ['ChatGPT'],
-    },
-    {
-      id: 'lesson-3-fallback',
-      lessonNumber: 3,
-      title: 'ChatGPT Canvas for Professional Documents',
-      description: 'Create professional documents, reports, and presentations using ChatGPT Canvas features.',
-      estimatedTime: 20,
-      difficultyLevel: 'Intermediate',
-      isFree: true,
-      tools: ['ChatGPT', 'Canvas'],
-    },
-    {
-      id: 'lesson-4-fallback',
-      lessonNumber: 4,
-      title: 'ChatGPT o1 Reasoning for Complex Problems',
-      description: 'Harness the power of ChatGPT o1 for advanced reasoning and problem-solving in complex scenarios.',
-      estimatedTime: 35,
-      difficultyLevel: 'Advanced',
-      isFree: true,
-      tools: ['ChatGPT o1'],
-    },
-    {
-      id: 'lesson-5-fallback',
-      lessonNumber: 5,
-      title: 'ChatGPT Data Analysis & Insights',
-      description: 'Learn to analyze data and extract meaningful insights using ChatGPT advanced analysis features.',
-      estimatedTime: 40,
-      difficultyLevel: 'Intermediate',
-      isFree: true,
-      tools: ['ChatGPT', 'Data Analysis'],
-    },
-  ];
+  try {
+    console.log('Fetching lessons from database...');
+    const lessons = await prisma.lesson.findMany({
+      where: { isPublished: true },
+      select: {
+        id: true,
+        lessonNumber: true,
+        title: true,
+        description: true,
+        estimatedTime: true,
+        difficultyLevel: true,
+        isFree: true,
+        tools: true,
+      },
+      orderBy: { lessonNumber: 'asc' },
+      take: 50, // Show first 50 lessons
+    });
 
-  const lessons = await safeQuery(
-    async () => {
-      return await prisma.lesson.findMany({
-        where: { isPublished: true },
-        select: {
-          id: true,
-          lessonNumber: true,
-          title: true,
-          description: true,
-          estimatedTime: true,
-          difficultyLevel: true,
-          isFree: true,
-          tools: true,
-        },
-        orderBy: { lessonNumber: 'asc' },
-        take: 20, // Show first 20 lessons
-      });
-    },
-    fallbackLessons // Return fallback lessons if database fails
-  );
-
-  return lessons || fallbackLessons;
+    console.log(`Successfully fetched ${lessons.length} lessons from database`);
+    return lessons;
+  } catch (error) {
+    console.error('Error fetching lessons:', error);
+    
+    // Minimal fallback for error cases - use real lesson IDs
+    const fallbackLessons = [
+      {
+        id: 'cmdxqcooo0000wc4pbelww7oo',
+        lessonNumber: 0,
+        title: 'AI Tool Selection Guide - Choose Your Perfect AI Toolkit',
+        description: 'Master the fundamentals of AI tool selection to maximize your productivity.',
+        estimatedTime: 15,
+        difficultyLevel: 'Beginner',
+        isFree: true,
+        tools: ['ChatGPT', 'Claude', 'Gemini'],
+      },
+      {
+        id: 'cmdxqcoot0001wc4pco0ht9fx',
+        lessonNumber: 1,
+        title: 'ChatGPT Email Mastery - Transform Your Inbox',
+        description: 'Learn professional email communication with ChatGPT.',
+        estimatedTime: 25,
+        difficultyLevel: 'Beginner',
+        isFree: true,
+        tools: ['ChatGPT'],
+      },
+    ];
+    
+    return fallbackLessons;
+  }
 }
 
 function getDifficultyColor(level: string): string {

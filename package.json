@@ -23,6 +23,8 @@
     "validate-production": "tsx scripts/validate-production.ts",
     "deploy-staging": "tsx scripts/deploy-staging.ts",
     "validate-staging": "tsx scripts/validate-staging.ts",
+    "deploy-production": "tsx scripts/deploy-production.ts",
+    "deploy-production:dry-run": "tsx scripts/deploy-production.ts --dry-run",
     "db:migrate:prod": "prisma migrate deploy",
     "db:reset:prod": "prisma migrate reset --force",
     "postbuild": "prisma generate",
