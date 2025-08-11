@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { rateLimiters } from './src/middleware/rate-limit';
 import { csrfProtection } from './src/middleware/csrf';
 import { defaultSecurityHeaders, securityHeaders } from './src/middleware/security-headers';
+import { requestIdMiddleware } from './src/middleware/request-id';
+import { defaultErrorHandler } from './src/middleware/error-handler';
 
 export async function middleware(request: NextRequest) {
   // Skip rate limiting for static files, images, and other assets
@@ -18,6 +20,9 @@ export async function middleware(request: NextRequest) {
   
   try {
     let response = NextResponse.next();
+
+    // Add request ID tracking
+    response = requestIdMiddleware(request, response);
 
     // Authentication routes
     if (pathname.startsWith('/api/auth') || pathname.includes('signin') || pathname.includes('signup')) {
@@ -61,7 +66,8 @@ export async function middleware(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('Middleware error:', error);
-    return NextResponse.next();
+    // Use error handler for middleware errors
+    return defaultErrorHandler(error, request);
   }
 }
 
