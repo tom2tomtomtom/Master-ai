@@ -288,7 +288,7 @@ export default function CertificateCard({
                     Requirements
                   </p>
                   <div className="space-y-1">
-                    {certificate.eligibility.missingRequirements.slice(0, 3).map((req, index) => (
+                    {(certificate.eligibility.missingRequirements || []).slice(0, 3).map((req, index) => (
                       <div key={index} className="flex items-center space-x-2">
                         <div className="h-1.5 w-1.5 rounded-full bg-gray-400" />
                         <span className="text-sm text-gray-600">{req}</span>

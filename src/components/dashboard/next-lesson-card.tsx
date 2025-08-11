@@ -132,14 +132,14 @@ export function NextLessonCard({ lesson, allCompleted, message }: NextLessonCard
               {lesson.difficultyLevel}
             </Badge>
           )}
-          {lesson.tools.slice(0, 2).map((tool) => (
+          {(lesson.tools || []).slice(0, 2).map((tool) => (
             <Badge key={tool} variant="secondary" className="text-xs">
               {tool}
             </Badge>
           ))}
-          {lesson.tools.length > 2 && (
+          {(lesson.tools || []).length > 2 && (
             <Badge variant="secondary" className="text-xs">
-              +{lesson.tools.length - 2} more
+              +{(lesson.tools || []).length - 2} more
             </Badge>
           )}
         </div>

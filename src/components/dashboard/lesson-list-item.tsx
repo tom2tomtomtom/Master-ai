@@ -177,11 +177,11 @@ export function LessonListItem({ lesson, isLocked = false, isNext = false }: Les
               <span>{formatTime(progress.timeSpentMinutes)} spent</span>
             </div>
           )}
-          {lesson.tools.length > 0 && (
+          {(lesson.tools || []).length > 0 && (
             <div>
-              <span>{lesson.tools.slice(0, 2).join(', ')}</span>
-              {lesson.tools.length > 2 && (
-                <span> +{lesson.tools.length - 2} more</span>
+              <span>{(lesson.tools || []).slice(0, 2).join(', ')}</span>
+              {(lesson.tools || []).length > 2 && (
+                <span> +{(lesson.tools || []).length - 2} more</span>
               )}
             </div>
           )}

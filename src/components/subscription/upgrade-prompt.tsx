@@ -174,7 +174,7 @@ export function UpgradePrompt({
             </p>
 
             <div className="grid grid-cols-2 gap-4 mb-4">
-              {targetTierConfig.features.slice(0, 4).map((feature, index) => (
+              {(targetTierConfig.features || []).slice(0, 4).map((feature, index) => (
                 <div key={index} className="flex items-center text-sm">
                   <Sparkles className="h-4 w-4 text-blue-500 mr-2" />
                   <span>{feature}</span>

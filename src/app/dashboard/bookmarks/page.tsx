@@ -237,7 +237,7 @@ export default function BookmarksPage() {
                             {bookmark.lesson.difficultyLevel}
                           </Badge>
                         )}
-                        {bookmark.lesson.tools.slice(0, 2).map((tool) => (
+                        {(bookmark.lesson.tools || []).slice(0, 2).map((tool) => (
                           <Badge key={tool} variant="secondary" className="text-xs">
                             {tool}
                           </Badge>

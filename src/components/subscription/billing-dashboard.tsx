@@ -217,13 +217,13 @@ export function BillingDashboard() {
               </div>
             ) : (
               <div className="space-y-3">
-                {invoices.slice(0, 5).map((invoice) => (
+                {(invoices || []).slice(0, 5).map((invoice) => (
                   <div key={invoice.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center space-x-3">
                       {getStatusIcon(invoice.status)}
                       <div>
                         <p className="font-medium">
-                          {invoice.description || `Invoice ${invoice.stripeInvoiceId.slice(-8)}`}
+                          {invoice.description || `Invoice ${(invoice.stripeInvoiceId || '').slice(-8)}`}
                         </p>
                         <p className="text-sm text-gray-500">
                           {invoice.periodStart && invoice.periodEnd 
@@ -298,7 +298,7 @@ export function BillingDashboard() {
                           <div className="flex items-center space-x-2">
                             {getStatusIcon(invoice.status)}
                             <span className="font-medium">
-                              #{invoice.stripeInvoiceId.slice(-8)}
+                              #{(invoice.stripeInvoiceId || '').slice(-8)}
                             </span>
                           </div>
                         </td>

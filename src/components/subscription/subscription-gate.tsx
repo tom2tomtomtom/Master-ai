@@ -126,7 +126,7 @@ export function SubscriptionGate({
         <div className="space-y-2">
           <h4 className="font-semibold text-gray-900">Upgrade benefits:</h4>
           <ul className="text-sm text-gray-600 space-y-1">
-            {requiredTierConfig.features.slice(0, 3).map((feature, index) => (
+            {(requiredTierConfig.features || []).slice(0, 3).map((feature, index) => (
               <li key={index} className="flex items-center">
                 <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
                 {feature}
@@ -191,7 +191,7 @@ export function SubscriptionGate({
               <div className="space-y-2">
                 <h4 className="font-semibold">What you'll get:</h4>
                 <ul className="text-sm text-gray-600 space-y-1">
-                  {requiredTierConfig.features.slice(0, 4).map((feature, index) => (
+                  {(requiredTierConfig.features || []).slice(0, 4).map((feature, index) => (
                     <li key={index} className="flex items-center">
                       <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
                       {feature}

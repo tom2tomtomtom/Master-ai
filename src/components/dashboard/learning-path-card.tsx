@@ -87,7 +87,7 @@ export function LearningPathCard({ path }: LearningPathCardProps) {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
                 <BookOpen className="h-4 w-4" />
-                <span>{progress?.totalLessons || path.lessons.length} lessons</span>
+                <span>{progress?.totalLessons || (path.lessons || []).length} lessons</span>
               </div>
               {path.estimatedHours && (
                 <div className="flex items-center gap-1">

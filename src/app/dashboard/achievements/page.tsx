@@ -285,7 +285,7 @@ export default function AchievementsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {stats.recentAchievements.slice(0, 6).map((achievement) => (
+                    {(stats.recentAchievements || []).slice(0, 6).map((achievement) => (
                       <div key={achievement.id} className="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                         <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
                           <TrophyIcon className="h-5 w-5 text-yellow-600" />
