@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { appLogger } from '@/lib/logger'
 
 // Get Supabase configuration from environment variables
 function getSupabaseConfig() {
@@ -8,12 +9,12 @@ function getSupabaseConfig() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl) {
-    console.error('NEXT_PUBLIC_SUPABASE_URL is required')
+    appLogger.logError('Supabase configuration error: NEXT_PUBLIC_SUPABASE_URL is required')
     return null
   }
 
   if (!supabaseAnonKey || supabaseAnonKey === 'your-supabase-anon-key-here') {
-    console.error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required. Please configure it in your environment variables.')
+    appLogger.logError('Supabase configuration error: NEXT_PUBLIC_SUPABASE_ANON_KEY is required')
     return null
   }
 
@@ -34,7 +35,7 @@ export const supabase = config ? createClient(config.supabaseUrl, config.supabas
     detectSessionInUrl: true
   }
 }) : (() => {
-  console.warn('Supabase client not initialized due to missing configuration')
+  appLogger.warn('Supabase client not initialized due to missing configuration')
   return null as any
 })()
 
@@ -69,7 +70,7 @@ export async function getCurrentUser() {
   }
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error) {
-    console.error('Error getting user:', error)
+    appLogger.logError('Error getting current user', { error })
     return null
   }
   return user
@@ -82,16 +83,19 @@ export async function signOut() {
   }
   const { error } = await supabase.auth.signOut()
   if (error) {
-    console.error('Error signing out:', error)
+    appLogger.logError('Error during sign out', { error })
   }
   return !error
 }
 
 if (config) {
-  console.log('🚀 Supabase client initialized:', {
-    url: config.supabaseUrl,
-    hasAnonKey: !!config.supabaseAnonKey
+  appLogger.info('Supabase client initialized', {
+    supabaseUrl: config.supabaseUrl,
+    hasAnonKey: !!config.supabaseAnonKey,
+    service: 'supabase'
   })
 } else {
-  console.warn('🚫 Supabase client not initialized: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is missing')
+  appLogger.warn('Supabase client not initialized: missing environment variables', {
+    missingVars: ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY']
+  })
 }

@@ -6,14 +6,16 @@
 import { cache } from './redisClient';
 import crypto from 'crypto';
 
-// Logger placeholder
+import { appLogger } from '@/lib/logger';
+
+// Logger using structured logging system
 const logger = {
   debug: (message: string, ...args: any[]) => {
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[CACHE] ${message}`, ...args);
+      appLogger.debug(`[CACHE] ${message}`, { args });
     }
   },
-  error: (message: string, ...args: any[]) => console.error(`[CACHE ERROR] ${message}`, ...args),
+  error: (message: string, ...args: any[]) => appLogger.logError(`[CACHE ERROR] ${message}`, { args }),
 };
 
 export interface CacheOptions {

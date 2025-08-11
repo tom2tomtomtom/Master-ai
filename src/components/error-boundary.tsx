@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react';
+import { appLogger } from '@/lib/logger';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -23,19 +24,22 @@ class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log the error details
-    console.error('🚨 ERROR BOUNDARY CAUGHT ERROR:', error);
-    console.error('🚨 ERROR INFO:', errorInfo);
-    console.error('🚨 COMPONENT STACK:', errorInfo.componentStack);
-    console.error('🚨 ERROR STACK:', error.stack);
+    // Log the error using structured logging
+    appLogger.errors.reactError(error, {
+      componentStack: errorInfo.componentStack,
+      errorBoundary: true,
+      timestamp: new Date().toISOString(),
+      userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : undefined,
+      url: typeof window !== 'undefined' ? window.location.href : undefined
+    });
     
     this.setState({
       error,
       errorInfo
     });
 
-    // Log to window for easier debugging
-    if (typeof window !== 'undefined') {
+    // Log to window for easier debugging in development
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
       (window as any).lastError = {
         error,
         errorInfo,

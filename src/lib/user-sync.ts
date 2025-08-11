@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { appLogger } from '@/lib/logger'
 import type { User } from '@supabase/supabase-js'
 
 /**
@@ -10,7 +11,7 @@ export async function syncUser(supabaseUser: User) {
     const { id, email, user_metadata } = supabaseUser
     
     if (!email) {
-      console.error('Cannot sync user without email:', id)
+      appLogger.logError('Cannot sync user without email', { userId: id })
       return null
     }
 
@@ -29,7 +30,12 @@ export async function syncUser(supabaseUser: User) {
           // Keep existing subscription info
         },
       })
-      console.log('✅ Updated existing user:', email)
+      appLogger.info('User synchronized - updated existing user', { 
+        email, 
+        userId: id,
+        hasName: !!updatedUser.name,
+        hasImage: !!updatedUser.image 
+      })
       return updatedUser
     } else {
       // Create new user
@@ -44,11 +50,19 @@ export async function syncUser(supabaseUser: User) {
           subscriptionStatus: 'ACTIVE',
         },
       })
-      console.log('✅ Created new user:', email)
+      appLogger.info('User synchronized - created new user', { 
+        email, 
+        userId: id,
+        name: newUser.name,
+        subscriptionTier: newUser.subscriptionTier 
+      })
       return newUser
     }
   } catch (error) {
-    console.error('❌ Error syncing user:', error)
+    appLogger.errors.databaseError('user_sync', error as Error, { 
+      userId: supabaseUser.id,
+      email: supabaseUser.email 
+    })
     return null
   }
 }

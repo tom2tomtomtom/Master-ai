@@ -14,8 +14,7 @@ import {
   ErrorContext
 } from '@/utils/errors/AppError';
 
-// Logger (will be replaced with winston in monitoring implementation)
-const logger = console;
+// Using structured logging system
 
 export interface ErrorHandlerConfig {
   enableStackTrace?: boolean;
@@ -163,19 +162,19 @@ function logError(error: AppError, config: Required<ErrorHandlerConfig>): void {
   // Choose log level based on severity
   switch (error.severity) {
     case ErrorSeverity.CRITICAL:
-      logger.error('CRITICAL ERROR:', logData);
+      appLogger.logError('Critical error occurred', logData);
       break;
     case ErrorSeverity.HIGH:
-      logger.error('HIGH SEVERITY ERROR:', logData);
+      appLogger.logError('High severity error occurred', logData);
       break;
     case ErrorSeverity.MEDIUM:
-      logger.warn('MEDIUM SEVERITY ERROR:', logData);
+      appLogger.warn('Medium severity error occurred', logData);
       break;
     case ErrorSeverity.LOW:
-      logger.info('LOW SEVERITY ERROR:', logData);
+      appLogger.info('Low severity error occurred', logData);
       break;
     default:
-      logger.error('UNKNOWN SEVERITY ERROR:', logData);
+      appLogger.logError('Unknown severity error occurred', logData);
   }
 }
 
@@ -185,13 +184,16 @@ function logError(error: AppError, config: Required<ErrorHandlerConfig>): void {
 function sendToMonitoring(error: AppError): void {
   // This would integrate with services like Sentry, DataDog, etc.
   if (process.env.NODE_ENV === 'production' && isHighSeverityError(error)) {
-    // TODO: Implement actual monitoring integration
-    console.error('MONITORING:', {
-      message: error.message,
-      code: error.code,
+    // Integrated with structured logging system for monitoring
+    // This will be picked up by log aggregation services (DataDog, Splunk, etc.)
+    appLogger.errors.unhandledError(error, {
+      errorCode: error.code,
       severity: error.severity,
       requestId: error.requestId,
       timestamp: error.timestamp,
+      operational: isOperationalError(error),
+      context: error.context,
+      monitoringAlert: true, // Flag for alerting systems
     });
   }
 }
