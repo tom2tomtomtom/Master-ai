@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { checkDatabaseHealth, ensureConnection } from '@/lib/prisma';
+import { appLogger } from '@/lib/logger';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
@@ -8,7 +9,9 @@ export async function GET() {
   const startTime = Date.now();
   
   try {
-    console.log('🔍 Starting database health check...');
+    appLogger.info('database-health-check-start', {
+      endpoint: '/api/health/database'
+    });
     
     // Test connection establishment
     const canConnect = await ensureConnection();
@@ -31,7 +34,12 @@ export async function GET() {
     const totalTime = Date.now() - startTime;
     
     if (isHealthy) {
-      console.log('✅ Database health check passed');
+      appLogger.info('database-health-check-success', {
+        endpoint: '/api/health/database',
+        connectionTime,
+        queryTime,
+        totalTime
+      });
       return NextResponse.json({
         status: 'healthy',
         database: 'connected',
@@ -41,7 +49,12 @@ export async function GET() {
         timestamp: new Date().toISOString()
       });
     } else {
-      console.log('❌ Database health check failed');
+      appLogger.errors.databaseError('database-health-check-failed', new Error('Database queries failing'), {
+        endpoint: '/api/health/database',
+        connectionTime,
+        queryTime,
+        totalTime
+      });
       return NextResponse.json({
         status: 'unhealthy',
         database: 'query_failed',
@@ -55,7 +68,10 @@ export async function GET() {
     
   } catch (error) {
     const totalTime = Date.now() - startTime;
-    console.error('💥 Database health check error:', error);
+    appLogger.errors.apiError('database-health-check', error as Error, {
+      endpoint: '/api/health/database',
+      totalTime
+    });
     
     return NextResponse.json({
       status: 'error',

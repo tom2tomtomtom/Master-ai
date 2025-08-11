@@ -1,13 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
 import { prisma, safeQuery } from '@/lib/prisma';
+import { appLogger } from '@/lib/logger';
 // import { cacheService, CacheKeys, CacheTTL } from '@/lib/cache';
 // import { monitoredQuery } from '@/lib/db-monitor';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     const user = await getAuthenticatedUser();
     
@@ -165,7 +166,9 @@ export async function GET(_request: NextRequest) {
       _fallback: true,
     });
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
+    appLogger.errors.apiError('dashboard-stats', error as Error, {
+      endpoint: '/api/dashboard/stats'
+    });
     // Return fallback data instead of error
     return NextResponse.json({
       totalLessons: 89,

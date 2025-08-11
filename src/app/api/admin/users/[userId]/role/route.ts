@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, logAdminAction, handleAuthError, hasSuperAdminRole } from '@/lib/supabase-auth-middleware';
-import { PrismaClient, UserRole } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import { appLogger } from '@/lib/logger';
+import { UserRole } from '@prisma/client';
+import { z } from 'zod';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
-
-const prisma = new PrismaClient();
 
 // PUT /api/admin/users/[userId]/role - Update user role (admin only)
 export async function PUT(
@@ -15,18 +16,16 @@ export async function PUT(
   try {
     const user = await requireAdmin();
     const resolvedParams = await params;
-    const targetUserId = resolvedParams.userId;
-
+    
+    // Validate parameters
+    const userIdSchema = z.string().uuid();
+    const updateRoleSchema = z.object({
+      role: z.nativeEnum(UserRole)
+    });
+    
+    const targetUserId = userIdSchema.parse(resolvedParams.userId);
     const body = await request.json();
-    const { role } = body;
-
-    // Validate role
-    if (!role || !Object.values(UserRole).includes(role)) {
-      return NextResponse.json(
-        { error: 'Invalid role specified' },
-        { status: 400 }
-      );
-    }
+    const { role } = updateRoleSchema.parse(body);
 
     // Get target user
     const targetUser = await prisma.user.findUnique({
@@ -94,7 +93,16 @@ export async function PUT(
     });
 
   } catch (error) {
-    console.error('Error updating user role:', error);
+    appLogger.errors.apiError('admin-update-user-role', error as Error, {
+      endpoint: '/api/admin/users/[userId]/role'
+    });
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid request parameters', details: error.issues },
+        { status: 400 }
+      );
+    }
     
     const authResponse = handleAuthError(error);
     if (authResponse) {

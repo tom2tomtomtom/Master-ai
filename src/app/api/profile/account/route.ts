@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase-auth-middleware';
 import { prisma } from '@/lib/prisma';
+import { appLogger } from '@/lib/logger';
 import { z } from 'zod';
 
 // Mark this route as dynamic to prevent static generation
@@ -55,7 +56,9 @@ export async function DELETE(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Account deletion error:', error);
+    appLogger.errors.apiError('account-deletion', error as Error, {
+      endpoint: '/api/profile/account'
+    });
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

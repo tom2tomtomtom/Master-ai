@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedUser, handleAuthError } from '@/lib/supabase-auth-middleware';
+import { NextResponse } from 'next/server';
+import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
 import { prisma } from '@/lib/prisma';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     const user = await getAuthenticatedUser();
     

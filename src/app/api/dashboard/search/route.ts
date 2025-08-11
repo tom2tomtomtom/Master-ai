@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser();
     
@@ -13,7 +13,7 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(_request.url);
+    const { searchParams } = new URL(request.url);
     const query = searchParams.get('q');
     const userId = user.id;
 

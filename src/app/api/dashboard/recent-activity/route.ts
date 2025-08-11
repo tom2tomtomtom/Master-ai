@@ -1,18 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
+import { NextResponse } from 'next/server';
+import { getAuthenticatedUser, ExtendedUser } from '@/lib/supabase-auth-middleware';
 import { prisma } from '@/lib/prisma';
+import { appLogger } from '@/lib/logger';
+import { DashboardActivity, ApiErrorResponse } from '@/types/api';
 // import { cacheService, CacheKeys, CacheTTL } from '@/lib/cache';
 // import { monitoredQuery } from '@/lib/db-monitor';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
 
-export async function GET(_request: NextRequest) {
+export async function GET(): Promise<NextResponse<DashboardActivity[] | ApiErrorResponse>> {
+  let user: ExtendedUser | null = null;
   try {
-    const user = await getAuthenticatedUser();
+    user = await getAuthenticatedUser();
     
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const userId = user.id;
@@ -115,7 +118,7 @@ export async function GET(_request: NextRequest) {
           ]);
 
           // Process activities efficiently
-          const allActivities: any[] = [];
+          const allActivities: (DashboardActivity & { sortKey: number })[] = [];
 
           // Add lesson completions
           recentProgress
@@ -203,9 +206,12 @@ export async function GET(_request: NextRequest) {
 
     return NextResponse.json(activities);
   } catch (error) {
-    console.error('Error fetching recent activity:', error);
+    appLogger.errors.apiError('dashboard/recent-activity', error as Error, {
+      context: 'fetch_recent_activity',
+      userId: user?.id
+    });
     return NextResponse.json(
-      { error: 'Failed to fetch recent activity' },
+      { success: false, error: 'Failed to fetch recent activity' },
       { status: 500 }
     );
   }

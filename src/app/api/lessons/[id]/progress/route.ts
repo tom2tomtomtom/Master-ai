@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedUser, handleAuthError } from '@/lib/supabase-auth-middleware';
+import { getAuthenticatedUser, handleAuthError, ExtendedUser } from '@/lib/supabase-auth-middleware';
 import { PrismaClient } from '@prisma/client';
 import { achievementSystem } from '@/lib/achievement-system';
 import { certificationEngine } from '@/lib/certification-engine';
+import { appLogger } from '@/lib/logger';
+import { 
+  UserProgressWithLesson, 
+  UpdateProgressRequest, 
+  ProgressResponse, 
+  ProgressUpdateData,
+  ApiErrorResponse, 
+  IdRouteParams 
+} from '@/types/api';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
@@ -12,19 +21,21 @@ const prisma = new PrismaClient();
 // GET /api/lessons/[id]/progress - Get lesson progress for current user
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  { params }: { params: Promise<IdRouteParams> }
+): Promise<NextResponse<UserProgressWithLesson | ApiErrorResponse>> {
+  let user: ExtendedUser | null = null;
+  let resolvedParams: IdRouteParams | null = null;
   try {
-    const user = await getAuthenticatedUser();
+    user = await getAuthenticatedUser();
+    resolvedParams = await params;
     
     if (!user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { success: false, error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    const resolvedParams = await params;
     const progress = await prisma.userProgress.findUnique({
       where: {
         userId_lessonId: {
@@ -67,9 +78,13 @@ export async function GET(
 
     return NextResponse.json(progress);
   } catch (error) {
-    console.error('Error fetching lesson progress:', error);
+    appLogger.errors.apiError('lessons/[id]/progress', error as Error, {
+      context: 'fetch_lesson_progress',
+      lessonId: resolvedParams?.id,
+      userId: user?.id
+    });
     return NextResponse.json(
-      { error: 'Failed to fetch lesson progress' },
+      { success: false, error: 'Failed to fetch lesson progress' },
       { status: 500 }
     );
   }
@@ -78,19 +93,22 @@ export async function GET(
 // PUT /api/lessons/[id]/progress - Update lesson progress
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  { params }: { params: Promise<IdRouteParams> }
+): Promise<NextResponse<ProgressResponse | ApiErrorResponse>> {
+  let user: ExtendedUser | null = null;
+  let resolvedParams: IdRouteParams | null = null;
   try {
-    const user = await getAuthenticatedUser();
+    user = await getAuthenticatedUser();
+    resolvedParams = await params;
     
     if (!user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { success: false, error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    const body = await request.json();
+    const body = await request.json() as UpdateProgressRequest;
     const { 
       progressPercentage, 
       timeSpentMinutes, 
@@ -98,7 +116,7 @@ export async function PUT(
       completedAt 
     } = body;
 
-    const updateData: any = {
+    const updateData: ProgressUpdateData = {
       lastAccessed: new Date(),
     };
 
@@ -126,7 +144,6 @@ export async function PUT(
       updateData.status = 'in_progress';
     }
 
-    const resolvedParams = await params;
     const progress = await prisma.userProgress.upsert({
       where: {
         userId_lessonId: {
@@ -174,7 +191,11 @@ export async function PUT(
           user.id
         );
       } catch (error) {
-        console.error('Error processing achievements/certifications:', error);
+        appLogger.errors.apiError('lessons/[id]/progress', error as Error, {
+          context: 'process_achievements_certifications',
+          lessonId: resolvedParams?.id,
+          userId: user.id
+        });
         // Don't fail the progress update if achievement processing fails
       }
     }
@@ -185,9 +206,13 @@ export async function PUT(
       newCertifications,
     });
   } catch (error) {
-    console.error('Error updating lesson progress:', error);
+    appLogger.errors.apiError('lessons/[id]/progress', error as Error, {
+      context: 'update_lesson_progress',
+      lessonId: resolvedParams?.id,
+      userId: user?.id
+    });
     return NextResponse.json(
-      { error: 'Failed to update lesson progress' },
+      { success: false, error: 'Failed to update lesson progress' },
       { status: 500 }
     );
   }

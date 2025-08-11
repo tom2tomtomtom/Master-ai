@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { appLogger } from '@/lib/logger';
+import { requireAdmin } from '@/lib/supabase-auth-middleware';
+import { z } from 'zod';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
@@ -7,18 +10,40 @@ export const dynamic = 'force-dynamic';
 // GET /api/lessons - Get all lessons with optional filtering
 export async function GET(request: NextRequest) {
   try {
+    // Validate query parameters
+    const querySchema = z.object({
+      page: z.coerce.number().min(1).default(1),
+      limit: z.coerce.number().min(1).max(100).default(20),
+      difficulty: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
+      tool: z.string().optional(),
+      search: z.string().optional(),
+      learningPathId: z.string().uuid().optional()
+    });
+    
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const difficulty = searchParams.get('difficulty');
-    const tool = searchParams.get('tool');
-    const search = searchParams.get('search');
-    const learningPathId = searchParams.get('learningPathId');
+    const { page, limit, difficulty, tool, search, learningPathId } = querySchema.parse({
+      page: searchParams.get('page'),
+      limit: searchParams.get('limit'),
+      difficulty: searchParams.get('difficulty'),
+      tool: searchParams.get('tool'),
+      search: searchParams.get('search'),
+      learningPathId: searchParams.get('learningPathId')
+    });
 
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {
+    const where: {
+      isPublished: boolean;
+      difficultyLevel?: string;
+      tools?: { hasEvery: string[] };
+      OR?: Array<{
+        title?: { contains: string; mode: 'insensitive' };
+        description?: { contains: string; mode: 'insensitive' };
+        content?: { contains: string; mode: 'insensitive' };
+      }>;
+      lessonLearningPaths?: { some: { learningPathId: string } };
+    } = {
       isPublished: true,
     };
 
@@ -40,7 +65,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (learningPathId) {
-      where.learningPaths = {
+      where.lessonLearningPaths = {
         some: {
           learningPathId: learningPathId,
         },
@@ -87,8 +112,18 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error fetching lessons:', error);
-    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
+    appLogger.errors.apiError('lessons', error as Error, {
+      context: 'fetch_lessons',
+      searchParams: request ? Object.fromEntries(new URL(request.url).searchParams) : {}
+    });
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid query parameters', details: error.issues },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Failed to fetch lessons', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -99,27 +134,42 @@ export async function GET(request: NextRequest) {
 // POST /api/lessons - Create a new lesson
 export async function POST(request: NextRequest) {
   try {
+    await requireAdmin(); // Only admin can create lessons
+    
+    const createLessonSchema = z.object({
+      lessonNumber: z.number().min(1),
+      title: z.string().min(1),
+      description: z.string().min(1),
+      content: z.string().min(1),
+      videoUrl: z.string().url().optional(),
+      videoDuration: z.number().optional(),
+      estimatedTime: z.number().min(1).optional(),
+      difficultyLevel: z.enum(['beginner', 'intermediate', 'advanced']),
+      tools: z.array(z.string()).default([]),
+      isPublished: z.boolean().default(false),
+      isFree: z.boolean().default(false)
+    });
+    
     const body = await request.json();
+    const validatedData = createLessonSchema.parse(body);
     
     const lesson = await prisma.lesson.create({
-      data: {
-        lessonNumber: body.lessonNumber,
-        title: body.title,
-        description: body.description,
-        content: body.content,
-        videoUrl: body.videoUrl,
-        videoDuration: body.videoDuration,
-        estimatedTime: body.estimatedTime,
-        difficultyLevel: body.difficultyLevel,
-        tools: body.tools || [],
-        isPublished: body.isPublished ?? false,
-        isFree: body.isFree ?? false,
-      },
+      data: validatedData,
     });
 
     return NextResponse.json(lesson, { status: 201 });
   } catch (error) {
-    console.error('Error creating lesson:', error);
+    appLogger.errors.apiError('lessons', error as Error, {
+      context: 'create_lesson'
+    });
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid lesson data', details: error.issues },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Failed to create lesson' },
       { status: 500 }

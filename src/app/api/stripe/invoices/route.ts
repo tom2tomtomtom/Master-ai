@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/supabase-auth-middleware'
 import { prisma } from '@/lib/prisma'
+import { appLogger } from '@/lib/logger'
 import { z } from 'zod'
 
 // Mark this route as dynamic to prevent static generation
@@ -51,7 +52,9 @@ export async function GET(req: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error fetching invoices:', error)
+    appLogger.errors.apiError('invoices-fetch', error as Error, {
+      endpoint: '/api/stripe/invoices'
+    })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

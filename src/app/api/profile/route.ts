@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
 import { prisma } from '@/lib/prisma';
+import { appLogger } from '@/lib/logger';
 import { z } from 'zod';
 
 // Mark this route as dynamic to prevent static generation
@@ -52,7 +53,9 @@ export async function GET() {
     return NextResponse.json({ user });
 
   } catch (error) {
-    console.error('Profile fetch error:', error);
+    appLogger.errors.apiError('profile-fetch', error as Error, {
+      endpoint: '/api/profile'
+    });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -111,7 +114,9 @@ export async function PATCH(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Profile update error:', error);
+    appLogger.errors.apiError('profile-update', error as Error, {
+      endpoint: '/api/profile'
+    });
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

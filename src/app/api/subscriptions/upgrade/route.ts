@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware'
 import { stripe, getPriceId, BillingInterval } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
+import { appLogger } from '@/lib/logger'
 import { z } from 'zod'
 
 // Mark this route as dynamic to prevent static generation
@@ -133,7 +134,9 @@ export async function POST(req: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error upgrading subscription:', error)
+    appLogger.errors.apiError('subscription-upgrade', error as Error, {
+      endpoint: '/api/subscriptions/upgrade'
+    })
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

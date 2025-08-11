@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, logAdminAction, handleAuthError } from '@/lib/supabase-auth-middleware';
-import { PrismaClient, UserRole } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { requireAdmin, handleAuthError } from '@/lib/supabase-auth-middleware';
+import { prisma } from '@/lib/prisma';
+import { appLogger } from '@/lib/logger';
+import { UserRole } from '@prisma/client';
+import { z } from 'zod';
 
 // Force dynamic rendering for admin routes
 export const dynamic = 'force-dynamic';
@@ -12,11 +13,21 @@ export async function GET(request: NextRequest) {
   try {
     const session = await requireAdmin();
 
+    // Validate query parameters
+    const querySchema = z.object({
+      page: z.coerce.number().min(1).default(1),
+      limit: z.coerce.number().min(1).max(100).default(20),
+      role: z.nativeEnum(UserRole).optional(),
+      search: z.string().optional()
+    });
+
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const role = searchParams.get('role') as UserRole | null;
-    const search = searchParams.get('search');
+    const { page, limit, role, search } = querySchema.parse({
+      page: searchParams.get('page'),
+      limit: searchParams.get('limit'),
+      role: searchParams.get('role'),
+      search: searchParams.get('search')
+    });
 
     const skip = (page - 1) * limit;
 
@@ -82,7 +93,16 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error fetching users:', error);
+    appLogger.errors.apiError('admin-users-list', error as Error, {
+      endpoint: '/api/admin/users'
+    });
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid query parameters', details: error.issues },
+        { status: 400 }
+      );
+    }
     
     const authResponse = handleAuthError(error);
     if (authResponse) {

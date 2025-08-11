@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import { appLogger } from '@/lib/logger';
 import { certificationEngine } from '@/lib/certification-engine';
 import { requireAuth, requireAdmin, logAdminAction, handleAuthError } from '@/lib/supabase-auth-middleware';
+import { z } from 'zod';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
-
-const prisma = new PrismaClient();
 
 // GET /api/certifications - Get available certifications and user progress
 export async function GET(request: NextRequest) {
@@ -72,7 +72,11 @@ export async function GET(request: NextRequest) {
               cert.id
             );
           } catch (error) {
-            console.error(`Error checking eligibility for cert ${cert.id}:`, error);
+            appLogger.errors.apiError('certification-eligibility-check', error as Error, {
+              endpoint: '/api/certifications',
+              certificationId: cert.id,
+              userId: user.id
+            });
           }
         }
 
@@ -95,7 +99,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Error fetching certifications:', error);
+    appLogger.errors.apiError('certifications-get', error as Error, {
+      endpoint: '/api/certifications'
+    });
     return NextResponse.json(
       { error: 'Failed to fetch certifications' },
       { status: 500 }
@@ -106,8 +112,14 @@ export async function GET(request: NextRequest) {
 // POST /api/certifications - Award a certification (admin only)
 export async function POST(request: NextRequest) {
   try {
+    const awardCertSchema = z.object({
+      certificationId: z.string().uuid(),
+      userId: z.string().uuid().optional(),
+      skipEligibilityCheck: z.boolean().default(false)
+    });
+    
     const body = await request.json();
-    const { certificationId, userId, skipEligibilityCheck = false } = body;
+    const { certificationId, userId, skipEligibilityCheck } = awardCertSchema.parse(body);
 
     // If userId is provided, this is an admin operation
     if (userId) {
@@ -147,7 +159,16 @@ export async function POST(request: NextRequest) {
       ...award,
     });
   } catch (error) {
-    console.error('Error awarding certification:', error);
+    appLogger.errors.apiError('certifications-award', error as Error, {
+      endpoint: '/api/certifications'
+    });
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid request parameters', details: error.issues },
+        { status: 400 }
+      );
+    }
     
     // Handle authorization errors
     const authResponse = handleAuthError(error);

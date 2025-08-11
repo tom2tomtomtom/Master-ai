@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { requireAdmin, logAdminAction, handleAuthError } from '@/lib/supabase-auth-middleware';
 import { backgroundJobSystem } from '@/lib/background-jobs';
 
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET /api/system/jobs - Check job status (admin only)
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     // Require admin access for checking job status
     await requireAdmin();

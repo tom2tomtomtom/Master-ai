@@ -1,14 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { requireAdmin, handleAuthError } from '@/lib/supabase-auth-middleware';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import { appLogger } from '@/lib/logger';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
 
-const prisma = new PrismaClient();
-
 // GET /api/admin/stats - Get platform statistics (admin only)
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     await requireAdmin();
 
@@ -168,7 +167,9 @@ export async function GET(_request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error fetching admin stats:', error);
+    appLogger.errors.apiError('admin-stats', error as Error, {
+      endpoint: '/api/admin/stats'
+    });
     
     const authResponse = handleAuthError(error);
     if (authResponse) {

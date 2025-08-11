@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { appLogger } from '@/lib/logger';
 
 const prisma = new PrismaClient();
 
@@ -35,9 +36,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🎓 Starting content import via API...');
-    console.log('Environment:', process.env.NODE_ENV);
-    console.log('Database URL available:', !!process.env.DATABASE_URL);
+    appLogger.info('Starting content import via API', {
+      environment: process.env.NODE_ENV,
+      databaseUrlAvailable: !!process.env.DATABASE_URL
+    });
 
     // Get JSON data from request body
     const body = await request.json();
@@ -50,7 +52,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log(`📚 Importing ${lessons.length} lessons...`);
+    appLogger.info('Starting lessons import', { totalLessons: lessons.length });
 
     // Import lessons
     let successCount = 0;
@@ -80,7 +82,11 @@ export async function POST(request: NextRequest) {
               isFree: lesson.isFree,
             }
           });
-          console.log(`📝 Updated lesson ${lesson.lessonNumber}: ${lesson.title}`);
+          appLogger.info('Updated lesson', {
+            lessonNumber: lesson.lessonNumber,
+            title: lesson.title,
+            action: 'update'
+          });
         } else {
           // Create new lesson
           await prisma.lesson.create({
@@ -98,12 +104,20 @@ export async function POST(request: NextRequest) {
               isFree: lesson.isFree,
             }
           });
-          console.log(`✨ Created lesson ${lesson.lessonNumber}: ${lesson.title}`);
+          appLogger.info('Created lesson', {
+            lessonNumber: lesson.lessonNumber,
+            title: lesson.title,
+            action: 'create'
+          });
         }
 
         successCount++;
       } catch (error) {
-        console.error(`❌ Failed to import lesson ${lesson.lessonNumber}:`, error);
+        appLogger.errors.apiError('content-import', error as Error, {
+          context: 'lesson_import',
+          lessonNumber: lesson.lessonNumber,
+          lessonTitle: lesson.title
+        });
         errorCount++;
       }
     }
@@ -114,7 +128,11 @@ export async function POST(request: NextRequest) {
     // Get final statistics
     const stats = await getImportStats();
 
-    console.log('✅ Content import completed via API');
+    appLogger.info('Content import completed via API', {
+      successful: successCount,
+      failed: errorCount,
+      total: lessons.length
+    });
 
     return NextResponse.json({
       success: true,
@@ -133,7 +151,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ Content import failed via API:', error);
+    appLogger.errors.apiError('content-import', error as Error, {
+      context: 'import_operation_failed'
+    });
     
     return NextResponse.json({
       success: false,
@@ -232,7 +252,7 @@ async function createLearningPaths() {
     },
   ];
 
-  console.log(`🛤️ Creating ${learningPathConfigs.length} learning paths...`);
+  appLogger.info('Creating learning paths', { totalPaths: learningPathConfigs.length });
 
   for (const config of learningPathConfigs) {
     try {
@@ -255,16 +275,25 @@ async function createLearningPaths() {
             order: config.order,
           }
         });
-        console.log(`📝 Updated learning path: ${config.name}`);
+        appLogger.info('Updated learning path', {
+          name: config.name,
+          action: 'update'
+        });
       } else {
         // Create new path
         await prisma.learningPath.create({
           data: config
         });
-        console.log(`✨ Created learning path: ${config.name}`);
+        appLogger.info('Created learning path', {
+          name: config.name,
+          action: 'create'
+        });
       }
     } catch (error) {
-      console.error(`❌ Failed to create learning path ${config.name}:`, error);
+      appLogger.errors.apiError('content-import', error as Error, {
+        context: 'learning_path_creation',
+        pathName: config.name
+      });
     }
   }
 }
@@ -319,7 +348,9 @@ export async function GET() {
       }
     });
   } catch (error) {
-    console.error('❌ Failed to get import stats:', error);
+    appLogger.errors.apiError('content-import', error as Error, {
+      context: 'get_import_stats'
+    });
     
     return NextResponse.json({
       success: false,

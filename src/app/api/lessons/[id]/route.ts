@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import { appLogger } from '@/lib/logger';
+import { requireAdmin } from '@/lib/supabase-auth-middleware';
+import { z } from 'zod';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
-
-const prisma = new PrismaClient();
 
 // GET /api/lessons/[id] - Get a specific lesson
 export async function GET(
@@ -13,8 +14,13 @@ export async function GET(
 ) {
   try {
     const resolvedParams = await params;
+    
+    // Validate lesson ID
+    const lessonIdSchema = z.string().uuid();
+    const lessonId = lessonIdSchema.parse(resolvedParams.id);
+    
     const lesson = await prisma.lesson.findUnique({
-      where: { id: resolvedParams.id },
+      where: { id: lessonId },
       include: {
         learningPaths: {
           include: {
@@ -53,7 +59,17 @@ export async function GET(
 
     return NextResponse.json(lesson);
   } catch (error) {
-    console.error('Error fetching lesson:', error);
+    appLogger.errors.apiError('lesson-fetch', error as Error, {
+      endpoint: '/api/lessons/[id]'
+    });
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid lesson ID format', details: error.issues },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Failed to fetch lesson' },
       { status: 500 }
@@ -67,29 +83,47 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
+    await requireAdmin(); // Only admin can update lessons
     
     const resolvedParams = await params;
     
+    // Validate lesson ID and update data
+    const lessonIdSchema = z.string().uuid();
+    const updateLessonSchema = z.object({
+      title: z.string().min(1).optional(),
+      description: z.string().min(1).optional(),
+      content: z.string().min(1).optional(),
+      videoUrl: z.string().url().optional(),
+      videoDuration: z.number().optional(),
+      estimatedTime: z.number().min(1).optional(),
+      difficultyLevel: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
+      tools: z.array(z.string()).optional(),
+      isPublished: z.boolean().optional(),
+      isFree: z.boolean().optional()
+    });
+    
+    const lessonId = lessonIdSchema.parse(resolvedParams.id);
+    const body = await request.json();
+    const validatedData = updateLessonSchema.parse(body);
+    
     const lesson = await prisma.lesson.update({
-      where: { id: resolvedParams.id },
-      data: {
-        title: body.title,
-        description: body.description,
-        content: body.content,
-        videoUrl: body.videoUrl,
-        videoDuration: body.videoDuration,
-        estimatedTime: body.estimatedTime,
-        difficultyLevel: body.difficultyLevel,
-        tools: body.tools,
-        isPublished: body.isPublished,
-        isFree: body.isFree,
-      },
+      where: { id: lessonId },
+      data: validatedData,
     });
 
     return NextResponse.json(lesson);
   } catch (error) {
-    console.error('Error updating lesson:', error);
+    appLogger.errors.apiError('lesson-update', error as Error, {
+      endpoint: '/api/lessons/[id]'
+    });
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid request data', details: error.issues },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Failed to update lesson' },
       { status: 500 }
@@ -103,14 +137,31 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireAdmin(); // Only admin can delete lessons
+    
     const resolvedParams = await params;
+    
+    // Validate lesson ID
+    const lessonIdSchema = z.string().uuid();
+    const lessonId = lessonIdSchema.parse(resolvedParams.id);
+    
     await prisma.lesson.delete({
-      where: { id: resolvedParams.id },
+      where: { id: lessonId },
     });
 
     return NextResponse.json({ message: 'Lesson deleted successfully' });
   } catch (error) {
-    console.error('Error deleting lesson:', error);
+    appLogger.errors.apiError('lesson-delete', error as Error, {
+      endpoint: '/api/lessons/[id]'
+    });
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid lesson ID format', details: error.issues },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Failed to delete lesson' },
       { status: 500 }

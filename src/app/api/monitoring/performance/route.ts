@@ -1,24 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { appLogger } from '@/lib/logger';
+import { PerformanceMetricData, ApiSuccessResponse, ApiErrorResponse } from '@/types/api';
 
 // Performance metrics endpoint
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse<ApiSuccessResponse<{ success: true }> | ApiErrorResponse>> {
+  let metricData: PerformanceMetricData | null = null;
   try {
-    const metricData = await request.json();
+    metricData = await request.json() as PerformanceMetricData;
     
     // Basic validation
     if (!metricData.name || typeof metricData.value !== 'number') {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { success: false, error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
     // Log performance metric
-    console.log('Performance Metric:', {
-      name: metricData.name,
+    appLogger.info('Performance metric recorded', {
+      metricName: metricData.name,
       value: metricData.value,
       unit: metricData.unit,
       tags: metricData.tags,
@@ -30,23 +33,30 @@ export async function POST(request: NextRequest) {
     
     // Alert on critical performance issues
     if (shouldAlert(metricData)) {
-      console.warn('Performance Alert:', metricData);
+      appLogger.warn('Performance alert triggered', {
+        metricName: metricData.name,
+        value: metricData.value,
+        threshold: getAlertThreshold(metricData.name),
+        tags: metricData.tags
+      });
       // await sendPerformanceAlert(metricData);
     }
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return NextResponse.json({ success: true, data: { success: true } }, { status: 200 });
     
   } catch (error) {
-    console.error('Performance tracking endpoint failed:', error);
+    appLogger.errors.apiError('monitoring/performance', error as Error, {
+      context: 'performance_tracking_endpoint',
+      metricData: metricData || null
+    });
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     );
   }
 }
 
-function shouldAlert(metricData: any): boolean {
-  // Define thresholds for performance alerts
+function getAlertThreshold(metricName: string): number | undefined {
   const alertThresholds = {
     'LCP': 4000, // Largest Contentful Paint > 4s
     'FID': 300,  // First Input Delay > 300ms
@@ -55,6 +65,10 @@ function shouldAlert(metricData: any): boolean {
     'slow_resource_load': 5000, // Resource load > 5s
   };
   
-  const threshold = alertThresholds[metricData.name as keyof typeof alertThresholds];
+  return alertThresholds[metricName as keyof typeof alertThresholds];
+}
+
+function shouldAlert(metricData: PerformanceMetricData): boolean {
+  const threshold = getAlertThreshold(metricData.name);
   return Boolean(threshold && metricData.value > threshold);
 }

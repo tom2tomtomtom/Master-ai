@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin, handleAuthError } from '@/lib/supabase-auth-middleware';
 import { contentImporter } from '@/lib/content-importer';
 import { contentParser } from '@/lib/content-parser';
+import { appLogger } from '@/lib/logger';
+import { z } from 'zod';
 
 // POST /api/admin/content - Trigger content import
 
@@ -8,7 +11,14 @@ import { contentParser } from '@/lib/content-parser';
 export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
-    const { action } = await request.json();
+    await requireAdmin();
+    
+    const actionSchema = z.object({
+      action: z.enum(['import', 'preview', 'validate'])
+    });
+    
+    const body = await request.json();
+    const { action } = actionSchema.parse(body);
 
     switch (action) {
       case 'import':
@@ -54,7 +64,22 @@ export async function POST(request: NextRequest) {
         );
     }
   } catch (error) {
-    console.error('Error in content admin API:', error);
+    appLogger.errors.apiError('admin-content-post', error as Error, {
+      endpoint: '/api/admin/content'
+    });
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid request parameters', details: error.issues },
+        { status: 400 }
+      );
+    }
+    
+    const authResponse = handleAuthError(error);
+    if (authResponse) {
+      return authResponse;
+    }
+    
     return NextResponse.json(
       { error: 'Content operation failed', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -65,6 +90,8 @@ export async function POST(request: NextRequest) {
 // GET /api/admin/content - Get content management statistics
 export async function GET() {
   try {
+    await requireAdmin();
+    
     const stats = await contentImporter.getImportStats();
     const lessons = await contentParser.parseAllLessons();
     const categories = contentParser.getLearningPathCategories(lessons);
@@ -82,7 +109,15 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('Error getting content stats:', error);
+    appLogger.errors.apiError('admin-content-get', error as Error, {
+      endpoint: '/api/admin/content'
+    });
+    
+    const authResponse = handleAuthError(error);
+    if (authResponse) {
+      return authResponse;
+    }
+    
     return NextResponse.json(
       { error: 'Failed to get content statistics' },
       { status: 500 }

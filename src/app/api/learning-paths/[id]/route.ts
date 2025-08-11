@@ -1,5 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, LearningPath, Lesson, Exercise } from '@prisma/client';
+import { appLogger } from '@/lib/logger';
+import { 
+  EnrichedLearningPath, 
+  UpdateLearningPathRequest, 
+  ApiErrorResponse, 
+  IdRouteParams, 
+  LessonWithProgress 
+} from '@/types/api';
+
+// Local type for lessons with exercises
+type LessonWithExercises = Lesson & {
+  exercises: Exercise[];
+};
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
@@ -9,10 +22,11 @@ const prisma = new PrismaClient();
 // GET /api/learning-paths/[id] - Get a specific learning path
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  { params }: { params: Promise<IdRouteParams> }
+): Promise<NextResponse<EnrichedLearningPath | ApiErrorResponse>> {
+  let resolvedParams: IdRouteParams | null = null;
   try {
-    const resolvedParams = await params;
+    resolvedParams = await params;
     const learningPath = await prisma.learningPath.findUnique({
       where: { id: resolvedParams.id },
       include: {
@@ -44,7 +58,7 @@ export async function GET(
 
     if (!learningPath) {
       return NextResponse.json(
-        { error: 'Learning path not found' },
+        { success: false, error: 'Learning path not found' },
         { status: 404 }
       );
     }
@@ -54,21 +68,27 @@ export async function GET(
     const totalEstimatedTime = lessons.reduce((sum, lesson) => sum + (lesson.estimatedTime || 0), 0);
     const totalExercises = lessons.reduce((sum, lesson) => sum + lesson.exercises.length, 0);
 
+    // Cast lessons to the expected type for calculateAverageDifficulty
+    const lessonsForDifficulty = lessons as LessonWithExercises[];
+
     const enrichedPath = {
       ...learningPath,
       stats: {
         totalLessons: lessons.length,
         totalEstimatedTime,
         totalExercises,
-        averageDifficulty: calculateAverageDifficulty(lessons),
+        averageDifficulty: calculateAverageDifficulty(lessonsForDifficulty),
       },
     };
 
     return NextResponse.json(enrichedPath);
   } catch (error) {
-    console.error('Error fetching learning path:', error);
+    appLogger.errors.apiError('learning-paths/[id]', error as Error, {
+      context: 'fetch_learning_path',
+      learningPathId: resolvedParams?.id
+    });
     return NextResponse.json(
-      { error: 'Failed to fetch learning path' },
+      { success: false, error: 'Failed to fetch learning path' },
       { status: 500 }
     );
   }
@@ -77,12 +97,12 @@ export async function GET(
 // PUT /api/learning-paths/[id] - Update a specific learning path
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  { params }: { params: Promise<IdRouteParams> }
+): Promise<NextResponse<LearningPath | ApiErrorResponse>> {
+  let resolvedParams: IdRouteParams | null = null;
   try {
-    const body = await request.json();
-    
-    const resolvedParams = await params;
+    const body = await request.json() as UpdateLearningPathRequest;
+    resolvedParams = await params;
     const learningPath = await prisma.learningPath.update({
       where: { id: resolvedParams.id },
       data: {
@@ -100,9 +120,12 @@ export async function PUT(
 
     return NextResponse.json(learningPath);
   } catch (error) {
-    console.error('Error updating learning path:', error);
+    appLogger.errors.apiError('learning-paths/[id]', error as Error, {
+      context: 'update_learning_path',
+      learningPathId: resolvedParams?.id
+    });
     return NextResponse.json(
-      { error: 'Failed to update learning path' },
+      { success: false, error: 'Failed to update learning path' },
       { status: 500 }
     );
   }
@@ -111,26 +134,30 @@ export async function PUT(
 // DELETE /api/learning-paths/[id] - Delete a specific learning path
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  { params }: { params: Promise<IdRouteParams> }
+): Promise<NextResponse<{ message: string } | ApiErrorResponse>> {
+  let resolvedParams: IdRouteParams | null = null;
   try {
-    const resolvedParams = await params;
+    resolvedParams = await params;
     await prisma.learningPath.delete({
       where: { id: resolvedParams.id },
     });
 
     return NextResponse.json({ message: 'Learning path deleted successfully' });
   } catch (error) {
-    console.error('Error deleting learning path:', error);
+    appLogger.errors.apiError('learning-paths/[id]', error as Error, {
+      context: 'delete_learning_path',
+      learningPathId: resolvedParams?.id
+    });
     return NextResponse.json(
-      { error: 'Failed to delete learning path' },
+      { success: false, error: 'Failed to delete learning path' },
       { status: 500 }
     );
   }
 }
 
 // Helper function to calculate average difficulty
-function calculateAverageDifficulty(lessons: any[]): string {
+function calculateAverageDifficulty(lessons: LessonWithExercises[]): string {
   const difficultyValues = { beginner: 1, intermediate: 2, advanced: 3, expert: 4 };
   const reverseDifficulty = { 1: 'beginner', 2: 'intermediate', 3: 'advanced', 4: 'expert' };
   

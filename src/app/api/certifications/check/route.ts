@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/certifications/check - Trigger automatic certification awarding
-export async function POST(_request: NextRequest) {
+export async function POST() {
   try {
     const user = await getAuthenticatedUser();
     

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase-auth-middleware';
 import { prisma } from '@/lib/prisma';
+import { appLogger } from '@/lib/logger';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
@@ -82,7 +83,9 @@ export async function PATCH(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Password change error:', error);
+    appLogger.errors.apiError('password-change', error as Error, {
+      endpoint: '/api/profile/password'
+    });
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

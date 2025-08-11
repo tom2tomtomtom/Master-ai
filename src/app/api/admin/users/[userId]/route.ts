@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, logAdminAction, handleAuthError } from '@/lib/supabase-auth-middleware';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import { appLogger } from '@/lib/logger';
+import { z } from 'zod';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
-
-const prisma = new PrismaClient();
 
 // GET /api/admin/users/[userId] - Get detailed user information (admin only)
 export async function GET(
@@ -15,7 +15,10 @@ export async function GET(
   try {
     await requireAdmin();
     const resolvedParams = await params;
-    const targetUserId = resolvedParams.userId;
+    
+    // Validate userId parameter
+    const userIdSchema = z.string().uuid();
+    const targetUserId = userIdSchema.parse(resolvedParams.userId);
 
     const user = await prisma.user.findUnique({
       where: { id: targetUserId },
@@ -99,7 +102,17 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error('Error fetching user details:', error);
+    appLogger.errors.apiError('admin-user-details', error as Error, {
+      endpoint: '/api/admin/users/[userId]',
+      method: 'GET'
+    });
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid user ID format', details: error.issues },
+        { status: 400 }
+      );
+    }
     
     const authResponse = handleAuthError(error);
     if (authResponse) {
@@ -121,7 +134,10 @@ export async function DELETE(
   try {
     const adminUser = await requireAdmin();
     const resolvedParams = await params;
-    const targetUserId = resolvedParams.userId;
+    
+    // Validate userId parameter
+    const userIdSchema = z.string().uuid();
+    const targetUserId = userIdSchema.parse(resolvedParams.userId);
 
     // Cannot delete own account
     if (targetUserId === adminUser.id) {
@@ -145,8 +161,12 @@ export async function DELETE(
 
     // For now, we'll implement this as deactivation rather than deletion
     // In a real system, you might want to anonymize or archive the data
+    const deleteSchema = z.object({
+      reason: z.string().optional()
+    });
+    
     const body = await request.json();
-    const { reason } = body;
+    const { reason } = deleteSchema.parse(body);
 
     // Log admin action
     await logAdminAction(adminUser, 'DEACTIVATE_USER', {
@@ -170,7 +190,17 @@ export async function DELETE(
     });
 
   } catch (error) {
-    console.error('Error deactivating user:', error);
+    appLogger.errors.apiError('admin-user-delete', error as Error, {
+      endpoint: '/api/admin/users/[userId]',
+      method: 'DELETE'
+    });
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid request parameters', details: error.issues },
+        { status: 400 }
+      );
+    }
     
     const authResponse = handleAuthError(error);
     if (authResponse) {

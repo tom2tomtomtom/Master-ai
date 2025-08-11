@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware'
 import { prisma } from '@/lib/prisma'
+import { appLogger } from '@/lib/logger'
 import { SUBSCRIPTION_TIERS } from '@/lib/stripe'
 
 // Mark this route as dynamic to prevent static generation
@@ -90,7 +91,9 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json(subscriptionData)
 
   } catch (error) {
-    console.error('Error fetching subscription:', error)
+    appLogger.errors.apiError('subscription-current', error as Error, {
+      endpoint: '/api/subscriptions/current'
+    })
     return NextResponse.json(
       { error: 'Failed to fetch subscription' },
       { status: 500 }

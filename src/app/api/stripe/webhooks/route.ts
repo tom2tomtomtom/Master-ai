@@ -2,6 +2,7 @@ import { headers } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe, STRIPE_WEBHOOK_EVENTS } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
+import { appLogger } from '@/lib/logger'
 import Stripe from 'stripe'
 
 // This is critical for webhook verification
@@ -27,7 +28,9 @@ async function verifyWebhookSignature(
   try {
     return stripe.webhooks.constructEvent(payload, signature, webhookSecret)
   } catch (error) {
-    console.error('Webhook signature verification failed:', error)
+    appLogger.errors.apiError('webhook-signature-verification', error as Error, {
+      endpoint: '/api/stripe/webhooks'
+    })
     throw new Error('Invalid webhook signature')
   }
 }
@@ -43,7 +46,10 @@ async function logWebhookEvent(event: Stripe.Event): Promise<void> {
       },
     })
   } catch (error) {
-    console.error('Failed to log webhook event:', error)
+    appLogger.errors.apiError('webhook-event-logging', error as Error, {
+      endpoint: '/api/stripe/webhooks',
+      eventType: event.type
+    })
   }
 }
 
@@ -61,7 +67,10 @@ async function markEventProcessed(
       },
     })
   } catch (updateError) {
-    console.error('Failed to update webhook event status:', updateError)
+    appLogger.errors.apiError('webhook-event-status-update', updateError as Error, {
+      endpoint: '/api/stripe/webhooks',
+      eventId
+    })
   }
 }
 
@@ -161,7 +170,11 @@ async function handleSubscriptionUpdated(
   })
 
   if (!existingSubscription) {
-    console.warn(`Subscription ${subscriptionId} not found in database`)
+    appLogger.info('subscription-not-found', {
+      subscriptionId,
+      endpoint: '/api/stripe/webhooks',
+      event: 'subscription.updated'
+    })
     return
   }
 
@@ -204,7 +217,11 @@ async function handleSubscriptionDeleted(
   })
 
   if (!existingSubscription) {
-    console.warn(`Subscription ${subscriptionId} not found in database`)
+    appLogger.info('subscription-not-found', {
+      subscriptionId,
+      endpoint: '/api/stripe/webhooks',
+      event: 'subscription.deleted'
+    })
     return
   }
 
@@ -243,7 +260,11 @@ async function handleInvoicePaymentSucceeded(
   })
 
   if (!stripeCustomer) {
-    console.warn(`Stripe customer ${customerId} not found in database`)
+    appLogger.info('stripe-customer-not-found', {
+      customerId,
+      endpoint: '/api/stripe/webhooks',
+      event: 'invoice.payment_succeeded'
+    })
     return
   }
 
@@ -313,7 +334,11 @@ async function handleInvoicePaymentFailed(
   })
 
   if (!stripeCustomer) {
-    console.warn(`Stripe customer ${customerId} not found in database`)
+    appLogger.info('stripe-customer-not-found', {
+      customerId,
+      endpoint: '/api/stripe/webhooks',
+      event: 'invoice.payment_failed'
+    })
     return
   }
 
@@ -399,11 +424,17 @@ export async function POST(req: NextRequest) {
 
         case STRIPE_WEBHOOK_EVENTS.CUSTOMER_SUBSCRIPTION_TRIAL_WILL_END:
           // Handle trial ending - could send email notification
-          console.log('Trial will end for subscription:', event.data.object)
+          appLogger.info('trial-ending', {
+            subscription: event.data.object,
+            endpoint: '/api/stripe/webhooks'
+          })
           break
 
         default:
-          console.log(`Unhandled event type: ${event.type}`)
+          appLogger.info('unhandled-webhook-event', {
+            eventType: event.type,
+            endpoint: '/api/stripe/webhooks'
+          })
       }
 
       // Mark event as processed
@@ -411,7 +442,11 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({ received: true })
     } catch (processingError) {
-      console.error('Error processing webhook event:', processingError)
+      appLogger.errors.apiError('webhook-event-processing', processingError as Error, {
+        endpoint: '/api/stripe/webhooks',
+        eventType: event.type,
+        eventId: event.id
+      })
       
       // Mark event as failed
       await markEventProcessed(event.id, processingError instanceof Error ? processingError.message : 'Unknown error')
@@ -422,7 +457,9 @@ export async function POST(req: NextRequest) {
       )
     }
   } catch (error) {
-    console.error('Webhook error:', error)
+    appLogger.errors.apiError('webhook-processing', error as Error, {
+      endpoint: '/api/stripe/webhooks'
+    })
     return NextResponse.json(
       { error: 'Webhook processing failed' },
       { status: 400 }
