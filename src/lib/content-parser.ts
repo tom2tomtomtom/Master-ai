@@ -1,9 +1,9 @@
 import matter from 'gray-matter';
 import { remark } from 'remark';
 import html from 'remark-html';
-// Only import fs on server side
-const fs = typeof window === 'undefined' ? require('fs') : null;
-const path = typeof window === 'undefined' ? require('path') : null;
+// Static imports for server-side only
+import fs from 'fs';
+import path from 'path';
 
 export interface LessonFrontmatter {
   title?: string;
@@ -34,7 +34,7 @@ export interface ParsedLesson {
 export class ContentParser {
   private rootDir: string;
 
-  constructor(rootDir: string = '/Users/thomasdowuona-hyde/Master-AI') {
+  constructor(rootDir: string = process.env.CONTENT_ROOT_DIR || process.cwd()) {
     this.rootDir = rootDir;
   }
 
@@ -43,7 +43,7 @@ export class ContentParser {
    */
   getLessonFiles(): string[] {
     // Only run on server side
-    if (typeof window !== 'undefined' || !fs) {
+    if (typeof window !== 'undefined') {
       return [];
     }
     

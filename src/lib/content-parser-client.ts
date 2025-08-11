@@ -48,7 +48,7 @@ export class ContentParser {
   }
 }
 
-// Client-safe export
+// Client-safe export with dynamic import
 export const contentParser = typeof window === 'undefined' 
-  ? require('./content-parser').contentParser 
+  ? (async () => (await import('./content-parser')).contentParser)()
   : new ContentParser();

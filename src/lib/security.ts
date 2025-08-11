@@ -6,6 +6,7 @@
  */
 
 import { NextRequest } from 'next/server';
+import crypto from 'crypto';
 
 // Rate limiting configuration
 interface RateLimitConfig {
@@ -206,8 +207,7 @@ export class CSRFProtection {
       crypto.getRandomValues(array);
     } else {
       // Fallback for Node.js environment
-      const nodeCrypto = require('crypto');
-      array.set(nodeCrypto.randomBytes(32));
+      array.set(crypto.randomBytes(32));
     }
     return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
   }
@@ -324,7 +324,6 @@ export function validateWebhookSignature(
   secret: string
 ): boolean {
   try {
-    const crypto = require('crypto');
     const expectedSignature = crypto
       .createHmac('sha256', secret)
       .update(payload, 'utf8')
