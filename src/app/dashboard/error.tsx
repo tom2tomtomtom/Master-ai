@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertTriangle, RefreshCcw, Home, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { appLogger } from '@/lib/logger'
 
 interface DashboardErrorProps {
   error: Error & { digest?: string }
@@ -16,9 +15,10 @@ export default function DashboardError({ error, reset }: DashboardErrorProps): J
   const errorId = `dash_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
   useEffect(() => {
-    // Log dashboard-specific error
-    appLogger.errors.dashboardError(error, {
+    // Log dashboard error to console for client-side debugging
+    console.error('Dashboard error:', {
       errorId,
+      error: error.message,
       digest: error.digest,
       timestamp: new Date().toISOString(),
       userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : undefined,
