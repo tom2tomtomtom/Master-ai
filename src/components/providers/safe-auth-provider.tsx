@@ -1,7 +1,13 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
+import { createClient } from '@supabase/supabase-js'
 import type { User, Session } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 interface AuthContextType {
   user: User | null
@@ -22,14 +28,27 @@ export function SafeAuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setMounted(true)
     
-    // Simple timeout to simulate auth loading
-    setTimeout(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setUser(session?.user ?? null)
       setLoading(false)
-    }, 100)
+    })
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session)
+        setUser(session?.user ?? null)
+        setLoading(false)
+      }
+    )
+
+    return () => subscription.unsubscribe()
   }, [])
 
   const signOut = async () => {
-    console.log('Sign out called in safe mode')
+    await supabase.auth.signOut()
   }
 
   const value: AuthContextType = {
@@ -37,7 +56,7 @@ export function SafeAuthProvider({ children }: { children: React.ReactNode }) {
     session,
     loading,
     signOut,
-    isAuthenticated: false
+    isAuthenticated: !!session
   }
 
   // Prevent hydration issues by not rendering children until mounted
