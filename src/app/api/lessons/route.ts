@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
-
-const prisma = new PrismaClient();
 
 // GET /api/lessons - Get all lessons with optional filtering
 export async function GET(request: NextRequest) {
@@ -90,8 +88,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching lessons:', error);
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
     return NextResponse.json(
-      { error: 'Failed to fetch lessons' },
+      { error: 'Failed to fetch lessons', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
