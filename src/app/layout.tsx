@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "Master all AI tools with our comprehensive educational platform featuring 88 lessons across 8 learning paths",
 };
 
-// Build timestamp: 2025-01-11T00:10:45.123Z - Force bundle refresh
+// Build timestamp: 2025-01-11T01:20:00.000Z - Force cache invalidation
 export default function RootLayout({
   children,
 }: Readonly<{
