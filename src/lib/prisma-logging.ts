@@ -33,7 +33,8 @@ export const prismaLoggingExtension = Prisma.defineExtension({
         
         try {
           const result = await query(args);
-          const duration = timer.end();
+          const timerResult = timer.end();
+          const duration = typeof timerResult === 'number' ? timerResult : timerResult.duration;
           
           // Determine result count
           let resultCount: number | undefined;

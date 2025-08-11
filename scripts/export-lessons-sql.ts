@@ -58,7 +58,7 @@ async function exportLessonsAsSQL() {
         `'${lesson.id}'`,
         lesson.lessonNumber,
         `'${lesson.title.replace(/'/g, "''")}'`,
-        `'${lesson.description.replace(/'/g, "''")}'`,
+        lesson.description ? `'${lesson.description.replace(/'/g, "''")}'` : 'NULL',
         `$content$${lesson.content}$content$`,
         lesson.videoUrl ? `'${lesson.videoUrl}'` : 'NULL',
         lesson.videoDuration || 'NULL',
@@ -79,8 +79,8 @@ async function exportLessonsAsSQL() {
       const values = [
         `'${path.id}'`,
         `'${path.name.replace(/'/g, "''")}'`,
-        `'${path.description.replace(/'/g, "''")}'`,
-        `'${path.targetAudience.replace(/'/g, "''")}'`,
+        path.description ? `'${path.description.replace(/'/g, "''")}'` : 'NULL',
+        path.targetAudience ? `'${path.targetAudience.replace(/'/g, "''")}'` : 'NULL',
         path.estimatedHours,
         `'${path.difficultyLevel}'`,
         `'${path.color}'`,
@@ -101,7 +101,7 @@ async function exportLessonsAsSQL() {
         `'${pathLesson.lessonId}'`,
         pathLesson.order,
         pathLesson.isRequired ? 'true' : 'false',
-        `'${pathLesson.createdAt?.toISOString() || new Date().toISOString()}'`
+        `'${new Date().toISOString()}'`
       ].join(', ');
       
       sql += `INSERT INTO "LearningPathLesson" (id, "learningPathId", "lessonId", "order", "isRequired", "createdAt") VALUES (${values}) ON CONFLICT ("learningPathId", "lessonId") DO UPDATE SET "order" = EXCLUDED."order", "isRequired" = EXCLUDED."isRequired";\n`;

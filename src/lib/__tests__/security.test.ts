@@ -14,8 +14,8 @@ import {
 } from '../security'
 import { cleanupMocks } from '../../__tests__/utils/test-utils'
 
-// Mock crypto for Node.js environment
-const mockCrypto = {
+// Mock Node.js crypto module
+jest.mock('crypto', () => ({
   getRandomValues: jest.fn((array) => {
     for (let i = 0; i < array.length; i++) {
       array[i] = Math.floor(Math.random() * 256)
@@ -27,10 +27,7 @@ const mockCrypto = {
     digest: jest.fn(() => 'mocked-signature'),
   })),
   timingSafeEqual: jest.fn(() => true),
-}
-
-// Mock Node.js crypto module
-jest.mock('crypto', () => mockCrypto)
+}))
 
 // Mock NextRequest for testing
 const createMockRequest = (overrides: Partial<NextRequest> = {}): NextRequest => {

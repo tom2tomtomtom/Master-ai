@@ -19,7 +19,7 @@ let redisClient: Redis | null = null;
 /**
  * Redis connection configuration
  */
-const getRedisConfig = (): Redis.RedisOptions => ({
+const getRedisConfig = (): import('ioredis').RedisOptions => ({
   retryStrategy: (times: number) => {
     const delay = Math.min(times * 50, 2000);
     logger.warn(`Redis connection retry attempt ${times}, delay: ${delay}ms`);

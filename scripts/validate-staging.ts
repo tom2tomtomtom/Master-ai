@@ -13,7 +13,7 @@
 
 interface ValidationResult {
   name: string;
-  status: 'pass' | 'fail' | 'warn';
+  status: 'pass' | 'fail' | 'warning';
   message: string;
   url?: string;
 }
@@ -163,7 +163,7 @@ async function testEndpoint(url: string, name: string, summary: ValidationSummar
       summary.warnings++;
       summary.results.push({
         name,
-        status: 'warn',
+        status: 'warning',
         message: `⚠️  ${response.status} Not Found (may require authentication)`,
         url
       });
@@ -218,7 +218,7 @@ function generateValidationReport(summary: ValidationSummary) {
   if (summary.warnings > 0) {
     console.log('⚠️  Warnings:');
     summary.results
-      .filter(r => r.status === 'warn')
+      .filter(r => r.status === 'warning')
       .forEach(result => {
         console.log(`   - ${result.name}: ${result.message}`);
         if (result.url) console.log(`     URL: ${result.url}`);

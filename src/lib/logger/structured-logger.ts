@@ -79,6 +79,6 @@ export class EnhancedPerformanceTimer extends PerformanceTimer {
       this.logger.performance.slowOperation(result.operation, result.duration, result.context);
     }
     
-    return result.duration;
+    return result;
   }
 }

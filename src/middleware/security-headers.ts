@@ -116,7 +116,7 @@ export function createSecurityHeaders(config: SecurityHeadersConfig = {}) {
     const isProduction = process.env.NODE_ENV === 'production';
 
     // Content Security Policy
-    if (fullConfig.contentSecurityPolicy) {
+    if (fullConfig.contentSecurityPolicy && fullConfig.contentSecurityPolicy.directives) {
       const cspValue = createCSPDirective(fullConfig.contentSecurityPolicy.directives);
       const headerName = fullConfig.contentSecurityPolicy.reportOnly 
         ? 'Content-Security-Policy-Report-Only'
@@ -143,7 +143,7 @@ export function createSecurityHeaders(config: SecurityHeadersConfig = {}) {
     }
 
     // X-Frame-Options
-    if (fullConfig.frameguard) {
+    if (fullConfig.frameguard && fullConfig.frameguard.action) {
       let frameValue = fullConfig.frameguard.action.toUpperCase();
       if (frameValue === 'ALLOW-FROM' && fullConfig.frameguard.domain) {
         frameValue += ` ${fullConfig.frameguard.domain}`;

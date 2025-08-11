@@ -147,10 +147,10 @@ export const env = (() => {
   const validation = validateEnv();
   if (!validation.success) {
     console.error('❌ Environment validation failed:');
-    if (validation.error.missing.length > 0) {
+    if (validation.error?.missing && validation.error.missing.length > 0) {
       console.error('Missing required variables:', validation.error.missing.join(', '));
     }
-    if (validation.error.invalid.length > 0) {
+    if (validation.error?.invalid && validation.error.invalid.length > 0) {
       console.error('Invalid variables:', validation.error.invalid.join(', '));
     }
     

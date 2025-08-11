@@ -13,8 +13,7 @@ import {
   isHighSeverityError,
   ErrorContext
 } from '@/utils/errors/AppError';
-
-// Using structured logging system
+import { appLogger } from '@/lib/logger';
 
 export interface ErrorHandlerConfig {
   enableStackTrace?: boolean;
@@ -71,9 +70,16 @@ function generateRequestId(): string {
  */
 function normalizeError(error: any, context: ErrorContext): AppError {
   if (isAppError(error)) {
-    // Update context if not already set
+    // Update context if not already set by creating a new instance
     if (!error.context.requestId) {
-      error.context = { ...error.context, ...context };
+      return new AppError(
+        error.message,
+        error.code,
+        error.statusCode,
+        error.severity,
+        error.isOperational,
+        { ...error.context, ...context }
+      );
     }
     return error;
   }
@@ -86,7 +92,7 @@ function normalizeError(error: any, context: ErrorContext): AppError {
       400,
       ErrorSeverity.LOW,
       true,
-      { ...context, originalError: error.message }
+      { ...context, metadata: { originalError: error.message } }
     );
   }
 
@@ -116,7 +122,7 @@ function normalizeError(error: any, context: ErrorContext): AppError {
       error.code === 'P2025' ? 404 : 400,
       ErrorSeverity.MEDIUM,
       true,
-      { ...context, prismaCode: error.code, originalError: error.message }
+      { ...context, metadata: { prismaCode: error.code, originalError: error.message } }
     );
   }
 
@@ -127,7 +133,7 @@ function normalizeError(error: any, context: ErrorContext): AppError {
       500,
       ErrorSeverity.HIGH,
       false,
-      { ...context, originalError: error.message, stack: error.stack }
+      { ...context, metadata: { originalError: error.message }, stackTrace: error.stack }
     );
   }
 
@@ -138,7 +144,7 @@ function normalizeError(error: any, context: ErrorContext): AppError {
     500,
     ErrorSeverity.CRITICAL,
     false,
-    { ...context, originalError: error.message, stack: error.stack }
+    { ...context, metadata: { originalError: error.message }, stackTrace: error.stack }
   );
 }
 
@@ -155,7 +161,7 @@ function logError(error: AppError, config: Required<ErrorHandlerConfig>): void {
   };
 
   // Remove stack trace in production unless it's a system error
-  if (process.env.NODE_ENV === 'production' && error.isOperational) {
+  if (process.env.NODE_ENV === 'production' && error.isOperational && logData.context) {
     delete logData.context.stackTrace;
   }
 

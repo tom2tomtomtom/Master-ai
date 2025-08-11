@@ -106,7 +106,8 @@ export function withApiLogging<T extends any[]>(
         { status: 500 }
       );
     } finally {
-      const duration = timer.end();
+      const timerResult = timer.end();
+      const duration = typeof timerResult === 'number' ? timerResult : timerResult.duration;
       const status = response?.status || 500;
       
       // Log request completion

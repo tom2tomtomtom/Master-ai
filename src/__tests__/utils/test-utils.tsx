@@ -136,3 +136,13 @@ export const getByTestId = (testId: string) => {
 export const getAllByTestId = (testId: string) => {
   return document.querySelectorAll(`[data-testid="${testId}"]`)
 }
+
+// Simple test to satisfy Jest requirement
+describe('Test Utils', () => {
+  test('should export mock utilities', () => {
+    expect(mockUser).toBeDefined()
+    expect(mockAuthContext).toBeDefined()
+    expect(typeof mockFetchResponse).toBe('function')
+    expect(typeof cleanupMocks).toBe('function')
+  })
+})

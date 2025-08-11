@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/components/providers/safe-auth-provider'
+import { useAuth } from '@/components/providers/auth-provider'
 
 interface UserProfile {
   id: string
