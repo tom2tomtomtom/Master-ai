@@ -214,4 +214,4 @@ After setup:
 ---
 
 **Built with Next.js, TypeScript, Prisma, and Supabase**  
-*Ready for immediate user testing and production deployment*
+*Ready for immediate user testing and production deployment*# Force redeploy with Supabase config Mon Aug 11 22:22:03 AEST 2025
