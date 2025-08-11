@@ -10,9 +10,12 @@ npm run setup
 ```
 
 ### 2. Configure Database
-Edit `.env` file with your PostgreSQL configuration:
+Edit `.env` file with your Supabase configuration:
 ```env
-DATABASE_URL="postgresql://username:password@localhost:5432/master_ai_db"
+DATABASE_URL="postgresql://postgres:your-password@your-project-ref.supabase.co:5432/postgres"
+DIRECT_DATABASE_URL="postgresql://postgres:your-password@your-project-ref.supabase.co:5432/postgres"
+NEXT_PUBLIC_SUPABASE_URL="https://your-project-ref.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
 ```
 
 ### 3. Initialize Database
@@ -46,7 +49,7 @@ Visit:
 ### 🛠️ Technical Features
 - **Next.js 15** with App Router
 - **TypeScript** with strict mode
-- **Prisma ORM** with PostgreSQL
+- **Prisma ORM** with Supabase PostgreSQL
 - **NextAuth.js** for authentication
 - **Tailwind CSS** for styling
 - **Comprehensive API** for content management
@@ -210,5 +213,5 @@ After setup:
 
 ---
 
-**Built with Next.js, TypeScript, Prisma, and PostgreSQL**  
+**Built with Next.js, TypeScript, Prisma, and Supabase**  
 *Ready for immediate user testing and production deployment*

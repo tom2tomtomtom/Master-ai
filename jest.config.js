@@ -12,7 +12,7 @@ const customJestConfig = {
   testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
   modulePathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
   transformIgnorePatterns: [
-    'node_modules/(?!(jose|openid-client|next-auth)/)'
+    'node_modules/(?!(jose|openid-client|next-auth|remark-gfm|remark|remark-html)/)'
   ],
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
