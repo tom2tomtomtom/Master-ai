@@ -289,8 +289,6 @@ async function main() {
 }
 
 // Handle CLI execution
-if (require.main === module) {
-  main().catch(console.error);
-}
+main().catch(console.error);
 
 export { ProductionDeployer };

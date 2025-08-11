@@ -149,6 +149,4 @@ async function validateContent() {
   }
 }
 
-if (require.main === module) {
-  validateContent().catch(console.error);
-}
+validateContent().catch(console.error);

@@ -111,7 +111,7 @@ async function exportLessonsAsSQL() {
     sql += `\n-- Export completed: ${lessons.length} lessons, ${learningPaths.length} paths, ${pathLessons.length} associations\n`;
     
     // Write to file
-    const fs = require('fs');
+    const fs = await import('fs');
     const filename = `master-ai-export-${new Date().toISOString().split('T')[0]}.sql`;
     fs.writeFileSync(filename, sql);
     
@@ -133,6 +133,5 @@ async function exportLessonsAsSQL() {
   }
 }
 
-if (require.main === module) {
-  exportLessonsAsSQL().catch(console.error);
-}
+// Execute if run directly
+exportLessonsAsSQL().catch(console.error);

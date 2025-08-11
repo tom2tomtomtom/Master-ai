@@ -367,9 +367,7 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-if (require.main === module) {
-  main().catch((error) => {
-    console.error('💥 Deployment preparation failed:', error.message);
-    process.exit(1);
-  });
-}
+main().catch((error) => {
+  console.error('💥 Deployment preparation failed:', error.message);
+  process.exit(1);
+});

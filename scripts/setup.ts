@@ -123,6 +123,4 @@ NEXTAUTH_SECRET="your-secret-key-here"
   }
 }
 
-if (require.main === module) {
-  setup().catch(console.error);
-}
+setup().catch(console.error);

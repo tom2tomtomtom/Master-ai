@@ -109,6 +109,4 @@ async function triggerProductionImport() {
   }
 }
 
-if (require.main === module) {
-  triggerProductionImport().catch(console.error);
-}
+triggerProductionImport().catch(console.error);

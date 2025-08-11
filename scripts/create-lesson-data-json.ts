@@ -314,6 +314,4 @@ async function createLessonDataJSON() {
   await creator.createLessonsDataJSON();
 }
 
-if (require.main === module) {
-  createLessonDataJSON().catch(console.error);
-}
+createLessonDataJSON().catch(console.error);

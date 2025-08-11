@@ -627,6 +627,4 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-if (require.main === module) {
-  importProductionContent().catch(console.error);
-}
+importProductionContent().catch(console.error);

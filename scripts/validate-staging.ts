@@ -259,9 +259,7 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-if (require.main === module) {
-  main().catch((error) => {
-    console.error('💥 Validation failed:', error.message);
-    process.exit(1);
-  });
-}
+main().catch((error) => {
+  console.error('💥 Validation failed:', error.message);
+  process.exit(1);
+});
