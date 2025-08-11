@@ -124,8 +124,8 @@ export function SupabaseAuthClean({ mode = 'signin', redirectTo = '/dashboard' }
         provider: 'google',
         options: {
           redirectTo: typeof window !== 'undefined' 
-            ? `${window.location.origin}/auth/callback`
-            : '/auth/callback',
+            ? `${window.location.origin}/dashboard`
+            : '/dashboard',
         },
       })
 
