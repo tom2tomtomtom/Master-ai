@@ -188,7 +188,7 @@ export function SupabaseAuthClean({ mode = 'signin', redirectTo = '/dashboard' }
         {/* Email/Password Form */}
         <form onSubmit={handleAuth} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-gray-900 font-medium">Email</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
@@ -205,7 +205,7 @@ export function SupabaseAuthClean({ mode = 'signin', redirectTo = '/dashboard' }
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-gray-900 font-medium">Password</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
@@ -232,7 +232,7 @@ export function SupabaseAuthClean({ mode = 'signin', redirectTo = '/dashboard' }
 
           {isSignUp && (
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword" className="text-gray-900 font-medium">Confirm Password</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
