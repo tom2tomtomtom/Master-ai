@@ -206,6 +206,3 @@ export function DashboardSidebar() {
     </>
   );
 }
-
-// Export with the name expected by other components
-export { DashboardSidebar as Sidebar };
