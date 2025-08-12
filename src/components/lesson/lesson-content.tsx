@@ -102,15 +102,27 @@ export const LessonContent = forwardRef<HTMLDivElement, LessonContentProps>(
         {/* Lesson Content */}
         <div
           ref={ref}
-          className="prose prose-lg max-w-none prose-gray overflow-y-auto"
+          className="overflow-y-auto"
           style={{ 
             fontSize: `${fontSize}px`, 
-            lineHeight: 1.7,
-            color: '#374151' // Force dark gray text
+            lineHeight: 1.7
           }}
           onScroll={onScroll}
-          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(processedContent) }}
-        />
+        >
+          <div 
+            className="lesson-text-content"
+            style={{
+              color: '#1f2937',
+              fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}
+            dangerouslySetInnerHTML={{ 
+              __html: DOMPurify.sanitize(processedContent).replace(
+                /style="[^"]*color[^"]*"/g, 
+                'style="color: #1f2937 !important"'
+              )
+            }}
+          />
+        </div>
 
         {/* Lesson Actions */}
         <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
