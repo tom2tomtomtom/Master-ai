@@ -15,7 +15,8 @@ import {
   X,
   Brain,
   BarChart3,
-  CreditCard
+  CreditCard,
+  GraduationCap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,11 @@ const sidebarItems = [
     title: 'Dashboard',
     href: '/dashboard',
     icon: Home,
+  },
+  {
+    title: 'All Lessons',
+    href: '/dashboard/lessons',
+    icon: GraduationCap,
   },
   {
     title: 'Learning Paths',
