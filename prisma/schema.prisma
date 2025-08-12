@@ -52,6 +52,7 @@ model User {
   certifications UserCertification[]
   achievements   UserAchievement[]
   stats          UserStats?
+  interactions   LessonInteraction[]
 
   // Team Management
   teamMemberships TeamMember[]
@@ -151,6 +152,8 @@ model Lesson {
   progress      UserProgress[]
   notes         LessonNote[]
   bookmarks     LessonBookmark[]
+  categories    LessonCategoryMapping[]
+  interactions  LessonInteraction[]
 
   @@unique([lessonNumber])
   @@map("lessons")
@@ -388,6 +391,50 @@ model Team {
   members TeamMember[]
 
   @@map("teams")
+}
+
+// Lesson Discovery System
+model LessonCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  color       String   @default("#3B82F6") // Hex color for UI
+  icon        String?  // Lucide icon name
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lessons LessonCategoryMapping[]
+
+  @@map("lesson_categories")
+}
+
+model LessonCategoryMapping {
+  id         String @id @default(cuid())
+  lessonId   String
+  categoryId String
+
+  lesson   Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  category LessonCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, categoryId])
+  @@map("lesson_category_mappings")
+}
+
+model LessonInteraction {
+  id              String   @id @default(cuid())
+  userId          String
+  lessonId        String
+  interactionType String   // 'view', 'start', 'complete', 'bookmark', 'search', 'preview', 'filter'
+  metadata        Json?    // Additional data like search query, filter values, etc.
+  sessionId       String?  // For grouping interactions in a session
+  createdAt       DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@map("lesson_interactions")
 }
 
 model TeamMember {
