@@ -6,7 +6,8 @@ import { appLogger } from '@/lib/logger';
 import type { InteractionData } from '@/types/discovery';
 
 export function useInteractionTracking() {
-  const { data: session } = useSession();
+  const sessionData = useSession();
+  const session = sessionData?.data;
 
   const trackInteraction = useCallback(async (data: InteractionData) => {
     // Only track interactions for authenticated users

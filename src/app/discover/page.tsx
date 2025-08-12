@@ -18,7 +18,7 @@ import type {
 } from '@/types/discovery';
 
 export default function DiscoverPage() {
-  const { data: session } = useSession();
+  const session = useSession()?.data;
   
   // State management
   const [searchParams, setSearchParams] = useState<SearchParams>({
