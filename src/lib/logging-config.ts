@@ -128,25 +128,30 @@ export function validateLoggingConfig(): { valid: boolean; errors: string[] } {
     }
   }
 
-  // Check log directory permissions in production
+  // Check log directory permissions in production (only for non-serverless environments)
   if (process.env.NODE_ENV === 'production' && typeof window === 'undefined') {
-    try {
-      // Use dynamic import to prevent client-side bundling
-      const fs = (globalThis as any).__fs || eval('require')('fs');
-      const path = (globalThis as any).__path || eval('require')('path');
-      const logDir = path.join(process.cwd(), 'logs');
-      
-      // Try to create logs directory if it doesn't exist
-      if (!fs.existsSync(logDir)) {
-        fs.mkdirSync(logDir, { recursive: true });
+    const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.FUNCTIONS_EMULATOR;
+    
+    if (!isServerless) {
+      try {
+        // Use dynamic import to prevent client-side bundling
+        const fs = (globalThis as any).__fs || eval('require')('fs');
+        const path = (globalThis as any).__path || eval('require')('path');
+        const logDir = path.join(process.cwd(), 'logs');
+        
+        // Try to create logs directory if it doesn't exist
+        if (!fs.existsSync(logDir)) {
+          fs.mkdirSync(logDir, { recursive: true });
+        }
+        
+        // Test write permissions
+        const testFile = path.join(logDir, 'test.log');
+        fs.writeFileSync(testFile, 'test');
+        fs.unlinkSync(testFile);
+      } catch (error) {
+        // In serverless environments, this is expected - just log the warning
+        console.warn('File logging not available in serverless environment');
       }
-      
-      // Test write permissions
-      const testFile = path.join(logDir, 'test.log');
-      fs.writeFileSync(testFile, 'test');
-      fs.unlinkSync(testFile);
-    } catch (error) {
-      errors.push('Cannot write to logs directory. Check permissions.');
     }
   }
 

@@ -71,30 +71,40 @@ export function createWinstonLogger(): winston.Logger {
 
   // Configure transports based on environment
   if (isProduction) {
-    // Production: File logging with rotation
-    logger.add(
-      new DailyRotateFile({
-        filename: 'logs/application-%DATE%.log',
-        datePattern: 'YYYY-MM-DD',
-        zippedArchive: true,
-        maxSize: '20m',
-        maxFiles: '30d',
-        level: 'info'
-      })
-    );
+    // Check if we're in a serverless/read-only environment (like Vercel)
+    const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.FUNCTIONS_EMULATOR;
+    
+    if (!isServerless) {
+      // Traditional server: File logging with rotation
+      try {
+        logger.add(
+          new DailyRotateFile({
+            filename: 'logs/application-%DATE%.log',
+            datePattern: 'YYYY-MM-DD',
+            zippedArchive: true,
+            maxSize: '20m',
+            maxFiles: '30d',
+            level: 'info'
+          })
+        );
 
-    logger.add(
-      new DailyRotateFile({
-        filename: 'logs/error-%DATE%.log',
-        datePattern: 'YYYY-MM-DD',
-        zippedArchive: true,
-        maxSize: '20m',
-        maxFiles: '90d',
-        level: 'error'
-      })
-    );
+        logger.add(
+          new DailyRotateFile({
+            filename: 'logs/error-%DATE%.log',
+            datePattern: 'YYYY-MM-DD',
+            zippedArchive: true,
+            maxSize: '20m',
+            maxFiles: '90d',
+            level: 'error'
+          })
+        );
+      } catch (error) {
+        // Fallback to console only if file logging fails
+        console.warn('File logging disabled - filesystem not writable');
+      }
+    }
 
-    // Also log to console in production for container logs
+    // Always log to console in production for serverless/container logs
     logger.add(
       new winston.transports.Console({
         format: jsonFormat,
