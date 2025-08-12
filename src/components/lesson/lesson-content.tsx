@@ -62,12 +62,12 @@ export const LessonContent = forwardRef<HTMLDivElement, LessonContentProps>(
             </Badge>
           </div>
           
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
             {lesson.title}
           </h1>
           
           {lesson.description && (
-            <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-lg text-gray-800 mb-6">
               {lesson.description}
             </p>
           )}
@@ -91,7 +91,7 @@ export const LessonContent = forwardRef<HTMLDivElement, LessonContentProps>(
             <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
               <div className="text-center">
                 <PlayCircle className="h-16 w-16 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-700">
                   Video content will be integrated here
                 </p>
               </div>
@@ -102,8 +102,12 @@ export const LessonContent = forwardRef<HTMLDivElement, LessonContentProps>(
         {/* Lesson Content */}
         <div
           ref={ref}
-          className="prose prose-lg max-w-none dark:prose-invert overflow-y-auto"
-          style={{ fontSize: `${fontSize}px`, lineHeight: 1.7 }}
+          className="prose prose-lg max-w-none prose-gray overflow-y-auto"
+          style={{ 
+            fontSize: `${fontSize}px`, 
+            lineHeight: 1.7,
+            color: '#374151' // Force dark gray text
+          }}
           onScroll={onScroll}
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(processedContent) }}
         />

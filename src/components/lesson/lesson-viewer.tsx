@@ -111,7 +111,7 @@ export function LessonViewer({ lesson, pathId }: LessonViewerProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <LessonHeader
         lesson={lesson}
