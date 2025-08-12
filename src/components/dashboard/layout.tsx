@@ -18,14 +18,14 @@ export function DashboardLayout({ children, title, subtitle, headerActions }: Da
   const router = useRouter();
 
   useEffect(() => {
-    if (loading) return; // Still loading
-
-    if (!user) {
+    // Only redirect after auth has loaded and we confirm no user
+    if (!loading && !user) {
       router.push('/auth/signin');
-      return;
     }
   }, [user, loading, router]);
 
+  // Show content immediately to prevent hydration mismatch
+  // Auth redirect will happen via useEffect
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -35,10 +35,6 @@ export function DashboardLayout({ children, title, subtitle, headerActions }: Da
         </div>
       </div>
     );
-  }
-
-  if (!user) {
-    return null; // Will redirect
   }
 
   return (
