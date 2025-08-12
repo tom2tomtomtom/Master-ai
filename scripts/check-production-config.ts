@@ -23,14 +23,14 @@ try {
   
   // Extract Supabase config from local .env
   const lines = envContent.split('\n');
-  const supabaseVars = lines.filter(line => 
+  const supabaseVars = lines.filter((line: string) => 
     line.includes('DATABASE_URL=') || 
     line.includes('NEXT_PUBLIC_SUPABASE_') ||
     line.includes('SUPABASE_SERVICE_ROLE_KEY=') ||
     line.includes('NEXTAUTH_')
   );
   
-  supabaseVars.forEach(line => {
+  supabaseVars.forEach((line: string) => {
     if (line.trim() && !line.startsWith('#')) {
       const [key, value] = line.split('=');
       if (key && value) {

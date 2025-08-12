@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+
+export const dynamic = 'force-dynamic';
 import { motion } from 'framer-motion';
 import { Sparkles, TrendingUp, Zap } from 'lucide-react';
 import { useSession } from 'next-auth/react';
