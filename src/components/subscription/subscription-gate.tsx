@@ -162,20 +162,10 @@ export function SubscriptionGate({
       <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle className="flex items-center">
-                <Lock className="h-5 w-5 mr-2 text-gray-500" />
-                {defaultTitle}
-              </DialogTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCloseDialog}
-                className="h-8 w-8 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+            <DialogTitle className="flex items-center">
+              <Lock className="h-5 w-5 mr-2 text-gray-500" />
+              {defaultTitle}
+            </DialogTitle>
             <DialogDescription>
               {defaultDescription}
             </DialogDescription>
