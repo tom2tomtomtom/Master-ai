@@ -22,12 +22,12 @@ export async function GET(request: NextRequest) {
     
     const { searchParams } = new URL(request.url);
     const { page, limit, difficulty, tool, search, learningPathId } = querySchema.parse({
-      page: searchParams.get('page'),
-      limit: searchParams.get('limit'),
-      difficulty: searchParams.get('difficulty'),
-      tool: searchParams.get('tool'),
-      search: searchParams.get('search'),
-      learningPathId: searchParams.get('learningPathId')
+      page: searchParams.get('page') || undefined,
+      limit: searchParams.get('limit') || undefined,
+      difficulty: searchParams.get('difficulty') || undefined,
+      tool: searchParams.get('tool') || undefined,
+      search: searchParams.get('search') || undefined,
+      learningPathId: searchParams.get('learningPathId') || undefined
     });
 
     const skip = (page - 1) * limit;
