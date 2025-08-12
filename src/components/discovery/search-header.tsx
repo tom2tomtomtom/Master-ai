@@ -72,7 +72,6 @@ export function SearchHeader({
     { value: 'title', label: 'Title A-Z', icon: <BookOpen className="w-4 h-4" /> },
   ];
 
-  // Mock suggestions - in a real app, these would come from an API
   const mockSuggestions: SearchSuggestion[] = [
     { type: 'query', value: 'ChatGPT prompting', label: 'ChatGPT prompting' },
     { type: 'query', value: 'Claude AI writing', label: 'Claude AI writing' },
@@ -85,12 +84,10 @@ export function SearchHeader({
     { type: 'category', value: 'Data Analysis', label: 'Data Analysis' },
   ];
 
-  // Update search query when props change
   useEffect(() => {
     setSearchQuery(searchParams.filters.searchQuery);
   }, [searchParams.filters.searchQuery]);
 
-  // Generate suggestions based on input
   useEffect(() => {
     if (searchQuery.length > 0) {
       const filtered = mockSuggestions.filter(suggestion =>
@@ -106,7 +103,6 @@ export function SearchHeader({
     setSearchQuery(value);
     setShowSuggestions(true);
     
-    // Debounce search
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
@@ -121,7 +117,7 @@ export function SearchHeader({
     onSearchParamsChange({
       ...searchParams,
       filters: newFilters,
-      page: 1, // Reset to first page on search
+      page: 1,
     });
 
     if (isAuthenticated && query) {
@@ -146,7 +142,6 @@ export function SearchHeader({
         page: 1,
       });
     } else if (suggestion.type === 'category') {
-      // For categories, we'd need the category ID, but this is just for demo
       setSearchQuery(suggestion.value);
       handleSearch(suggestion.value);
     }
@@ -190,12 +185,8 @@ export function SearchHeader({
   return (
     <div className={`bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-30 ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        {/* Mobile-first layout with responsive design */}
-        <div className="space-y-4">
-          {/* Top row - Search input */}
-          <div className="flex items-center gap-3">
-            {/* Search input with autocomplete */}
-            <div className="flex-1 min-w-0 relative">
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex-1 min-w-0 relative">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
@@ -207,10 +198,7 @@ export function SearchHeader({
                 value={searchQuery}
                 onChange={(e) => handleSearchInputChange(e.target.value)}
                 onFocus={() => setShowSuggestions(suggestions.length > 0)}
-                onBlur={() => {
-                  // Delay hiding suggestions to allow clicks
-                  setTimeout(() => setShowSuggestions(false), 200);
-                }}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 className="pl-10 pr-10 py-3 text-base border-gray-300 rounded-lg focus:ring-ai-blue-500 focus:border-ai-blue-500"
               />
               {searchQuery && (
@@ -223,7 +211,6 @@ export function SearchHeader({
               )}
             </div>
 
-            {/* Search suggestions dropdown */}
             <AnimatePresence>
               {showSuggestions && suggestions.length > 0 && (
                 <motion.div
@@ -261,7 +248,6 @@ export function SearchHeader({
             </AnimatePresence>
           </div>
 
-          {/* Filters toggle */}
           <Button
             variant={filtersOpen ? "default" : "outline"}
             onClick={onToggleFilters}
@@ -279,7 +265,6 @@ export function SearchHeader({
             )}
           </Button>
 
-          {/* Sort dropdown */}
           <div className="relative shrink-0">
             <Button
               variant="outline"
@@ -321,7 +306,6 @@ export function SearchHeader({
             </AnimatePresence>
           </div>
 
-          {/* View mode toggle */}
           <div className="flex rounded-lg border border-gray-300 overflow-hidden shrink-0">
             <Button
               variant={searchParams.viewMode === 'grid' ? 'default' : 'ghost'}
@@ -344,7 +328,6 @@ export function SearchHeader({
           </div>
         </div>
 
-        {/* Results summary */}
         {totalResults !== undefined && (
           <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
             <div className="flex items-center gap-2">
@@ -367,7 +350,6 @@ export function SearchHeader({
         )}
       </div>
 
-      {/* Click outside handler for dropdowns */}
       {(showSortMenu || showSuggestions) && (
         <div
           className="fixed inset-0 z-10"
