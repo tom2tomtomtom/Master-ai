@@ -11,8 +11,9 @@ import { StatsCard } from '@/components/dashboard/stats-card';
 import { LearningPathCard } from '@/components/dashboard/learning-path-card';
 import { NextLessonCard } from '@/components/dashboard/next-lesson-card';
 import { RecentActivityList } from '@/components/dashboard/recent-activity';
-import { ProgressCircle } from '@/components/dashboard/progress-circle';
+import { ProgressRing } from '@/components/ui/progress-ring';
 import { SubscriptionWidget } from '@/components/subscription/subscription-widget';
+import { GlassCard } from '@/components/ui/glass-card';
 
 import { 
   BookOpen, 
@@ -204,39 +205,49 @@ export default function DashboardPage(): JSX.Element {
   }
 
   return (
-    <DashboardLayout 
-      title={`${getGreeting()}, ${user?.user_metadata?.name || user?.email || 'Student'}!`}
-      subtitle={getMotivationalMessage()}
-    >
-      <div className="space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-ai-blue-50 to-ai-purple-50">
+      <DashboardLayout 
+        title={`${getGreeting()}, ${user?.user_metadata?.name || user?.email || 'Student'}!`}
+        subtitle={getMotivationalMessage()}
+      >
+        <div className="space-y-8">
         {/* Overview Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard
             title="Overall Progress"
-            value={`${stats?.overallCompletionPercentage || 0}%`}
+            value={stats?.overallCompletionPercentage || 0}
             subtitle={`${stats?.completedLessons || 0} of ${stats?.totalLessons || 0} lessons`}
             icon={Target}
             color="blue"
+            variant="gradient"
+            animated={true}
             trend={stats?.lessonsCompletedThisWeek ? {
               value: stats.lessonsCompletedThisWeek,
               direction: 'up'
             } : undefined}
+            className="animate-slide-in [animation-delay:0ms]"
           />
           
           <StatsCard
             title="Learning Streak"
-            value={`${stats?.learningStreak || 0}`}
+            value={stats?.learningStreak || 0}
             subtitle="consecutive days"
             icon={Flame}
             color="orange"
+            variant="default"
+            animated={true}
+            className="animate-slide-in [animation-delay:200ms]"
           />
           
           <StatsCard
             title="Time Invested"
-            value={`${Math.floor((stats?.totalTimeSpent || 0) / 60)}h`}
+            value={Math.floor((stats?.totalTimeSpent || 0) / 60)}
             subtitle={`${(stats?.totalTimeSpent || 0) % 60}m total`}
             icon={Clock}
             color="green"
+            variant="default"
+            animated={true}
+            className="animate-slide-in [animation-delay:400ms]"
           />
           
           <StatsCard
@@ -245,6 +256,9 @@ export default function DashboardPage(): JSX.Element {
             subtitle="lessons completed"
             icon={Calendar}
             color="purple"
+            variant="gradient"
+            animated={true}
+            className="animate-slide-in [animation-delay:600ms]"
           />
         </div>
 
@@ -283,11 +297,11 @@ export default function DashboardPage(): JSX.Element {
             </Card>
 
             {/* Overall Progress */}
-            <Card>
+            <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-gray-50 hover:shadow-2xl transition-all duration-300 animate-scale-in">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Learning Progress</CardTitle>
-                  <Button variant="ghost" size="sm" asChild>
+                  <CardTitle className="text-lg bg-gradient-to-r from-ai-blue-600 to-ai-purple-600 bg-clip-text text-transparent">Learning Progress</CardTitle>
+                  <Button variant="ghost" size="sm" asChild className="hover:bg-ai-blue-50">
                     <Link href="/dashboard/progress">
                       View Details <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
@@ -296,30 +310,32 @@ export default function DashboardPage(): JSX.Element {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-center mb-6">
-                  <ProgressCircle 
+                  <ProgressRing 
                     value={stats?.overallCompletionPercentage || 0}
                     size="lg"
                     color="blue"
+                    variant="glow"
+                    animated={true}
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-green-600">
+                  <div className="p-3 rounded-lg bg-success-50 border border-success-200 transition-all hover:bg-success-100">
+                    <div className="text-2xl font-bold text-success-600">
                       {stats?.completedLessons || 0}
                     </div>
-                    <div className="text-xs text-gray-600">Completed</div>
+                    <div className="text-xs text-success-700 font-medium">Completed</div>
                   </div>
-                  <div>
-                    <div className="text-2xl font-bold text-blue-600">
+                  <div className="p-3 rounded-lg bg-ai-blue-50 border border-ai-blue-200 transition-all hover:bg-ai-blue-100">
+                    <div className="text-2xl font-bold text-ai-blue-600">
                       {stats?.inProgressLessons || 0}
                     </div>
-                    <div className="text-xs text-gray-600">In Progress</div>
+                    <div className="text-xs text-ai-blue-700 font-medium">In Progress</div>
                   </div>
-                  <div>
-                    <div className="text-2xl font-bold text-gray-400">
+                  <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 transition-all hover:bg-gray-100">
+                    <div className="text-2xl font-bold text-gray-500">
                       {(stats?.totalLessons || 0) - (stats?.completedLessons || 0) - (stats?.inProgressLessons || 0)}
                     </div>
-                    <div className="text-xs text-gray-600">Not Started</div>
+                    <div className="text-xs text-gray-600 font-medium">Not Started</div>
                   </div>
                 </div>
               </CardContent>
@@ -418,7 +434,8 @@ export default function DashboardPage(): JSX.Element {
             </Card>
           </div>
         </div>
-      </div>
-    </DashboardLayout>
+        </div>
+      </DashboardLayout>
+    </div>
   );
 }

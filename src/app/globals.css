@@ -81,3 +81,53 @@
 .prose h6 {
   color: #111827 !important;
 }
+
+/* Enhanced copy functionality styles */
+.lesson-enhanced-content pre {
+  position: relative;
+  background: #f8f9fa !important;
+  border: 1px solid #e9ecef !important;
+  border-radius: 8px !important;
+  padding: 16px !important;
+  margin-bottom: 16px !important;
+}
+
+.lesson-enhanced-content blockquote {
+  position: relative;
+  background: #f0f9ff !important;
+  border: 1px solid #0ea5e9 !important;
+  border-left-width: 4px !important;
+  padding: 16px !important;
+  border-radius: 8px !important;
+  margin: 16px 0 !important;
+}
+
+.copy-button-wrapper {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+}
+
+.copy-button-wrapper button {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.copy-button-wrapper button:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* Add visual indication that content is copyable */
+.lesson-enhanced-content pre:hover .copy-button-wrapper {
+  opacity: 1;
+}
+
+.lesson-enhanced-content blockquote:hover .copy-button-wrapper {
+  opacity: 1;
+}
