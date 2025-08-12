@@ -97,8 +97,9 @@ export default async function LessonsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {lessons.map((lesson) => (
-              <Card key={lesson.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
+              <Link key={lesson.id} href={`/dashboard/lesson/${lesson.id}`} className="block">
+                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                  <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
@@ -118,14 +119,14 @@ export default async function LessonsPage() {
                   </div>
                   
                   {lesson.description && (
-                    <p className="text-sm text-gray-600 line-clamp-2">
+                    <p className="text-sm text-gray-800 line-clamp-2">
                       {lesson.description}
                     </p>
                   )}
                 </CardHeader>
                 
                 <CardContent className="pt-0">
-                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                  <div className="flex items-center justify-between text-sm text-gray-700 mb-4">
                     <div className="flex items-center gap-4">
                       {lesson.estimatedTime && (
                         <div className="flex items-center gap-1">
@@ -160,13 +161,14 @@ export default async function LessonsPage() {
                     </div>
                   )}
 
-                  <Button asChild className="w-full">
-                    <Link href={`/dashboard/lesson/${lesson.id}`}>
+                  <div className="mt-4 text-center">
+                    <span className="inline-flex items-center justify-center w-full bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors">
                       Start Lesson
-                    </Link>
-                  </Button>
+                    </span>
+                  </div>
                 </CardContent>
               </Card>
+              </Link>
             ))}
           </div>
         )}
