@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Clock, BookOpen, Star } from 'lucide-react';
 
 // Force this page to be dynamically rendered instead of statically generated
-export const dynamic = 'force-dynamic';
+// Removed force-dynamic to prevent hydration issues
+// export const dynamic = 'force-dynamic';
 
 async function getLessons() {
   try {
