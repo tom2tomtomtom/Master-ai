@@ -138,7 +138,7 @@ export default function LandingPage() {
                 Sign In
               </Link>
               <GradientButton asChild variant="glass">
-                <Link href="/auth/signup">Start Learning</Link>
+                <Link href="/auth/signup" className="inline-flex items-center">Start Learning</Link>
               </GradientButton>
             </div>
           </div>
@@ -167,14 +167,14 @@ export default function LandingPage() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
               <GradientButton size="xl" variant="shimmer" asChild>
-                <Link href="/auth/signup">
+                <Link href="/auth/signup" className="inline-flex items-center gap-2">
                   <Sparkles className="w-5 h-5" />
                   Start Free Trial
                 </Link>
               </GradientButton>
-              
+
               <GradientButton size="xl" variant="glass" asChild>
-                <Link href="#demo">
+                <Link href="#demo" className="inline-flex items-center gap-2">
                   <Play className="w-5 h-5" />
                   Watch Demo
                 </Link>
@@ -309,14 +309,14 @@ export default function LandingPage() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
               <GradientButton size="xl" variant="shimmer" asChild>
-                <Link href="/auth/signup">
+                <Link href="/auth/signup" className="inline-flex items-center gap-2">
                   Start Free Trial
                   <ArrowRight className="w-5 h-5" />
                 </Link>
               </GradientButton>
-              
+
               <GradientButton size="xl" variant="glass" asChild>
-                <Link href="/auth/signin">
+                <Link href="/auth/signin" className="inline-flex items-center gap-2">
                   Sign In
                 </Link>
               </GradientButton>
