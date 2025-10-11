@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware'
+import { requireAuth, AuthError } from '@/lib/auth-helpers'
 import { stripe } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { appLogger } from '@/lib/logger'
@@ -23,18 +23,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const user = await getAuthenticatedUser()
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
+    const userId = user.userId
 
     const body = await req.json()
     const { cancelAtPeriodEnd, reason } = cancelSubscriptionSchema.parse(body)
 
     // Get user with current subscription
     const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
+      where: { id: userId },
       include: {
         stripeSubscriptions: {
           where: {
@@ -75,7 +72,7 @@ export async function POST(req: NextRequest) {
             ...(currentSubscription.metadata as Record<string, any> || {}),
             cancellationReason: reason || 'User requested cancellation',
             cancelledAt: new Date().toISOString(),
-            cancelledBy: user.id,
+            cancelledBy: userId,
           }
         }
       )
@@ -104,6 +101,13 @@ export async function POST(req: NextRequest) {
     })
 
   } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      )
+    }
+
     appLogger.errors.apiError('subscription-cancel', error as Error, {
       endpoint: '/api/subscriptions/cancel'
     })
@@ -142,15 +146,12 @@ export async function PATCH(_req: NextRequest) {
       )
     }
 
-    const user = await getAuthenticatedUser()
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
+    const userId = user.userId
 
     // Get user with current subscription
     const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
+      where: { id: userId },
       include: {
         stripeSubscriptions: {
           where: {
@@ -188,7 +189,7 @@ export async function PATCH(_req: NextRequest) {
         metadata: {
           ...(currentSubscription.metadata as Record<string, any> || {}),
           reactivatedAt: new Date().toISOString(),
-          reactivatedBy: user.id,
+          reactivatedBy: userId,
         }
       }
     )
@@ -206,6 +207,13 @@ export async function PATCH(_req: NextRequest) {
     })
 
   } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      )
+    }
+
     appLogger.errors.apiError('subscription-reactivate', error as Error, {
       endpoint: '/api/subscriptions/cancel'
     })

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware'
+import { requireAuth, AuthError } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import { appLogger } from '@/lib/logger'
 import { SUBSCRIPTION_TIERS } from '@/lib/stripe'
@@ -9,15 +9,12 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(_req: NextRequest) {
   try {
-    const authUser = await getAuthenticatedUser()
-    
-    if (!authUser) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const authUser = await requireAuth()
+    const userId = authUser.userId
 
     // Get user with subscription details
     const user = await prisma.user.findUnique({
-      where: { id: authUser.id },
+      where: { id: userId },
       include: {
         stripeCustomer: true,
         stripeSubscriptions: {
@@ -91,6 +88,13 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json(subscriptionData)
 
   } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      )
+    }
+
     appLogger.errors.apiError('subscription-current', error as Error, {
       endpoint: '/api/subscriptions/current'
     })

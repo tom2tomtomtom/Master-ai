@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
+import { requireAuth, AuthError } from '@/lib/auth-helpers';
 import { achievementSystem } from '@/lib/achievement-system';
+import { appLogger } from '@/lib/logger';
 
 // GET /api/achievements - Get available achievements and user progress
 
@@ -8,14 +9,8 @@ import { achievementSystem } from '@/lib/achievement-system';
 export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
-    const user = await getAuthenticatedUser();
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
+    const userId = user.userId;
 
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
@@ -24,7 +19,7 @@ export async function GET(request: NextRequest) {
     if (earnedOnly) {
       // Get only earned achievements
       const userAchievements = await achievementSystem.getUserAchievements(
-        user.id,
+        userId,
         category || undefined
       );
 
@@ -32,7 +27,7 @@ export async function GET(request: NextRequest) {
     } else {
       // Get all achievements with progress
       const achievementProgress = await achievementSystem.getUserAchievementProgress(
-        user.id
+        userId
       );
 
       // Filter by category if specified
@@ -43,7 +38,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(filteredProgress);
     }
   } catch (error) {
-    console.error('Error fetching achievements:', error);
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
+    appLogger.error('Error fetching achievements', { error });
     return NextResponse.json(
       { error: 'Failed to fetch achievements' },
       { status: 500 }
@@ -54,27 +56,21 @@ export async function GET(request: NextRequest) {
 // POST /api/achievements - Process user activity for achievements
 export async function POST(request: NextRequest) {
   try {
-    const user = await getAuthenticatedUser();
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
+    const userId = user.userId;
 
     const body = await request.json();
-    const { 
-      lessonCompleted, 
-      noteCreated, 
-      bookmarkCreated, 
+    const {
+      lessonCompleted,
+      noteCreated,
+      bookmarkCreated,
       timeSpent,
       date = new Date()
     } = body;
 
     // Process the user activity
     const newAchievements = await achievementSystem.processUserActivity(
-      user.id,
+      userId,
       {
         lessonCompleted,
         noteCreated,
@@ -87,7 +83,7 @@ export async function POST(request: NextRequest) {
     // Return the newly earned achievements
     if (newAchievements.length > 0) {
       const achievementDetails = await achievementSystem.getUserAchievements(
-        user.id
+        userId
       );
 
       const newAchievementDetails = achievementDetails.filter(
@@ -107,7 +103,14 @@ export async function POST(request: NextRequest) {
       count: 0,
     });
   } catch (error) {
-    console.error('Error processing user activity:', error);
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
+    appLogger.error('Error processing user activity', { error });
     return NextResponse.json(
       { error: 'Failed to process user activity' },
       { status: 500 }

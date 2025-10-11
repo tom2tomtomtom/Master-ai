@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware'
+import { requireAuth, AuthError } from '@/lib/auth-helpers'
 import { stripe, getPriceId, BillingInterval } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { appLogger } from '@/lib/logger'
@@ -25,18 +25,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const user = await getAuthenticatedUser()
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await requireAuth()
+    const userId = user.userId
 
     const body = await req.json()
     const { tier, interval, quantity, prorationBehavior } = upgradeSubscriptionSchema.parse(body)
 
     // Get user with current subscription
     const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
+      where: { id: userId },
       include: {
         stripeCustomer: true,
         stripeSubscriptions: {
@@ -109,7 +106,7 @@ export async function POST(req: NextRequest) {
         ],
         proration_behavior: prorationBehavior,
         metadata: {
-          userId: user.id,
+          userId: userId,
           tier,
           interval,
           previousTier: currentSubscription.tier,
@@ -134,6 +131,13 @@ export async function POST(req: NextRequest) {
     })
 
   } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      )
+    }
+
     appLogger.errors.apiError('subscription-upgrade', error as Error, {
       endpoint: '/api/subscriptions/upgrade'
     })

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
+import { requireAuth, AuthError } from '@/lib/auth-helpers';
 import { achievementSystem } from '@/lib/achievement-system';
+import { appLogger } from '@/lib/logger';
 import { PrismaClient } from '@prisma/client';
 
 // Mark this route as dynamic to prevent static generation
@@ -11,16 +12,8 @@ const prisma = new PrismaClient();
 // GET /api/achievements/stats - Get user achievement statistics
 export async function GET() {
   try {
-    const user = await getAuthenticatedUser();
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const userId = user.id;
+    const user = await requireAuth();
+    const userId = user.userId;
 
     // Get user stats
     const userStats = await prisma.userStats.findUnique({
@@ -95,7 +88,14 @@ export async function GET() {
       })),
     });
   } catch (error) {
-    console.error('Error fetching achievement stats:', error);
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
+    appLogger.error('Error fetching achievement stats', { error });
     return NextResponse.json(
       { error: 'Failed to fetch achievement statistics' },
       { status: 500 }
