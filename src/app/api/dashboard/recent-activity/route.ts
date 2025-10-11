@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser, ExtendedUser } from '@/lib/supabase-auth-middleware';
+import { requireAuth, AuthError } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { appLogger } from '@/lib/logger';
 import { DashboardActivity, ApiErrorResponse } from '@/types/api';
@@ -10,15 +10,9 @@ import { DashboardActivity, ApiErrorResponse } from '@/types/api';
 export const dynamic = 'force-dynamic';
 
 export async function GET(): Promise<NextResponse<DashboardActivity[] | ApiErrorResponse>> {
-  let user: ExtendedUser | null = null;
   try {
-    user = await getAuthenticatedUser();
-    
-    if (!user) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const userId = user.id;
+    const user = await requireAuth();
+    const userId = user.userId;
     const limit = 10; // Number of recent activities to fetch
 
     // Get cached activities if available
@@ -206,9 +200,15 @@ export async function GET(): Promise<NextResponse<DashboardActivity[] | ApiError
 
     return NextResponse.json(activities);
   } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
     appLogger.errors.apiError('dashboard/recent-activity', error as Error, {
       context: 'fetch_recent_activity',
-      userId: user?.id
     });
     return NextResponse.json(
       { success: false, error: 'Failed to fetch recent activity' },

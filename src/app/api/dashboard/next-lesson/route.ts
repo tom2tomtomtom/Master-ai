@@ -1,19 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
+import { requireAuth, AuthError } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
+import { appLogger } from '@/lib/logger';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const user = await getAuthenticatedUser();
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const userId = user.id;
+    const user = await requireAuth();
+    const userId = user.userId;
 
     // Get user's progress
     const userProgress = await prisma.userProgress.findMany({
@@ -118,7 +114,14 @@ export async function GET() {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Error fetching next lesson:', error);
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
+    appLogger.error('Error fetching next lesson', { error });
     return NextResponse.json(
       { error: 'Failed to fetch next lesson recommendation' },
       { status: 500 }

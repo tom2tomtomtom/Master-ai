@@ -1,21 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
+import { requireAuth, AuthError } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
+import { appLogger } from '@/lib/logger';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getAuthenticatedUser();
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
+    const userId = user.userId;
 
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q');
-    const userId = user.id;
 
     if (!query || query.length < 2) {
       return NextResponse.json([]);
@@ -146,7 +143,14 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(results);
   } catch (error) {
-    console.error('Error searching content:', error);
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
+    appLogger.error('Error searching content', { error });
     return NextResponse.json(
       { error: 'Failed to search content' },
       { status: 500 }

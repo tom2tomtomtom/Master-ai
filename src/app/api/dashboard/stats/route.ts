@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
+import { requireAuth, AuthError } from '@/lib/auth-helpers';
 import { prisma, safeQuery } from '@/lib/prisma';
 import { appLogger } from '@/lib/logger';
 // import { cacheService, CacheKeys, CacheTTL } from '@/lib/cache';
@@ -10,13 +10,8 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const user = await getAuthenticatedUser();
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const userId = user.id;
+    const user = await requireAuth();
+    const userId = user.userId;
 
     // Try to get cached stats first
     // const stats = await cacheService.getOrSet(
@@ -166,6 +161,13 @@ export async function GET() {
       _fallback: true,
     });
   } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
     appLogger.errors.apiError('dashboard-stats', error as Error, {
       endpoint: '/api/dashboard/stats'
     });

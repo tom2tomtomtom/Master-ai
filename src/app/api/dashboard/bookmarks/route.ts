@@ -1,19 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
+import { requireAuth, AuthError } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
+import { appLogger } from '@/lib/logger';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const user = await getAuthenticatedUser();
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const userId = user.id;
+    const user = await requireAuth();
+    const userId = user.userId;
 
     const bookmarks = await prisma.lessonBookmark.findMany({
       where: { userId },
@@ -67,7 +63,14 @@ export async function GET() {
 
     return NextResponse.json(formattedBookmarks);
   } catch (error) {
-    console.error('Error fetching bookmarks:', error);
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
+    appLogger.error('Error fetching bookmarks', { error });
     return NextResponse.json(
       { error: 'Failed to fetch bookmarks' },
       { status: 500 }
