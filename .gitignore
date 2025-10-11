@@ -56,3 +56,6 @@ test-*.js
 greyed-out-*.png
 signup-*.png
 signin-*.png
+e2e/.auth/user.json
+playwright-report/
+test-results/

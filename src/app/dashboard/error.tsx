@@ -17,7 +17,8 @@ export default function DashboardError({ error, reset }: DashboardErrorProps): J
 
   useEffect(() => {
     // Log dashboard error with structured logging
-    appLogger.errors.clientError('dashboard-error-boundary', error, {
+    appLogger.error('dashboard-error-boundary', {
+      error: error.message,
       errorId,
       digest: error.digest,
       section: 'dashboard',

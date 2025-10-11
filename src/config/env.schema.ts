@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { appLogger } from '@/lib/logger';
 
 // Environment variable schema for Master-AI SaaS
 export const envSchema = z.object({
@@ -155,28 +154,19 @@ export const getEnv = <K extends keyof Env>(key: K): Env[K] => {
 export const env = (() => {
   const validation = validateEnv();
   if (!validation.success) {
-    appLogger.error('Environment validation failed', {
-      component: 'env_schema',
-      error: validation.error
-    });
+    // Use console.error as fallback to avoid circular dependencies with logger
+    console.error('[env_schema] Environment validation failed:', validation.error);
+
     if (validation.error?.missing && validation.error.missing.length > 0) {
-      appLogger.error('Missing required environment variables', {
-        component: 'env_schema',
-        missing: validation.error.missing
-      });
+      console.error('[env_schema] Missing required environment variables:', validation.error.missing);
     }
     if (validation.error?.invalid && validation.error.invalid.length > 0) {
-      appLogger.error('Invalid environment variables', {
-        component: 'env_schema',
-        invalid: validation.error.invalid
-      });
+      console.error('[env_schema] Invalid environment variables:', validation.error.invalid);
     }
 
     // In development, warn but continue
     if (process.env.NODE_ENV === 'development') {
-      appLogger.warn('Continuing with invalid environment in development mode', {
-        component: 'env_schema'
-      });
+      console.warn('[env_schema] Continuing with invalid environment in development mode');
       return process.env as any;
     }
 

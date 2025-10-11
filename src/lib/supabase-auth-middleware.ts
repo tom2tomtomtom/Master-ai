@@ -53,16 +53,16 @@ export interface AuthSession {
 export async function getAuthenticatedUser(): Promise<ExtendedUser | null> {
   try {
     // Check for required environment variables
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       appLogger.warn('Supabase environment variables not configured for server auth');
       return null;
     }
-    
+
     const cookieStore = cookies()
-    
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       {
         cookies: {
           get(name: string) {
