@@ -7,6 +7,107 @@ import type { RecommendationSection, LessonWithMetadata } from '@/types/discover
 
 export const dynamic = 'force-dynamic';
 
+// Type definitions for user learning data
+interface UserLearningData {
+  completedLessons: Array<Prisma.LessonGetPayload<{
+    include: {
+      categories: {
+        include: {
+          category: true;
+        };
+      };
+    };
+  }>>;
+  inProgressLessons: Array<Prisma.LessonGetPayload<true>>;
+  bookmarkedLessons: Array<Prisma.LessonGetPayload<{
+    include: {
+      categories: {
+        include: {
+          category: true;
+        };
+      };
+    };
+  }>>;
+  preferredTools: string[];
+  preferredCategories: string[];
+  completedDifficulties: (string | null)[];
+  recentInteractions: Array<Prisma.LessonInteractionGetPayload<{
+    include: {
+      lesson: {
+        include: {
+          categories: {
+            include: {
+              category: true;
+            };
+          };
+        };
+      };
+    };
+  }>>;
+}
+
+// Base lesson with includes for queries that have progress and bookmarks
+type LessonWithProgressAndBookmarks = Prisma.LessonGetPayload<{
+  include: {
+    categories: {
+      include: {
+        category: {
+          select: {
+            id: true;
+            name: true;
+            color: true;
+            icon: true;
+          };
+        };
+      };
+    };
+    progress: {
+      select: {
+        status: true;
+        progressPercentage: true;
+        completedAt: true;
+        lastAccessed: true;
+      };
+    };
+    bookmarks: {
+      select: {
+        id: true;
+      };
+    };
+    _count: {
+      select: {
+        interactions: true;
+      };
+    };
+  };
+}>;
+
+// Lesson with only categories and count (no progress/bookmarks)
+type LessonWithBasicIncludes = Prisma.LessonGetPayload<{
+  include: {
+    categories: {
+      include: {
+        category: {
+          select: {
+            id: true;
+            name: true;
+            color: true;
+            icon: true;
+          };
+        };
+      };
+    };
+    _count: {
+      select: {
+        interactions: true;
+      };
+    };
+  };
+}>;
+
+// Union type for all lesson variations
+type LessonWithIncludes = LessonWithProgressAndBookmarks | LessonWithBasicIncludes;
+
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth();
@@ -52,7 +153,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function getUserLearningData(userId: string) {
+async function getUserLearningData(userId: string): Promise<UserLearningData> {
   const [completedLessons, inProgressLessons, interactions, bookmarks] = await Promise.all([
     // Completed lessons with categories and tools
     prisma.userProgress.findMany({
@@ -200,7 +301,7 @@ async function getContinueLearning(userId: string, limit: number): Promise<Recom
 
 async function getRecommendedLessons(
   userId: string,
-  userData: any,
+  userData: UserLearningData,
   limit: number
 ): Promise<RecommendationSection> {
   // Build recommendation based on user preferences
@@ -369,7 +470,7 @@ async function getQuickWins(limit: number): Promise<RecommendationSection> {
 
 async function getToolSpecificRecommendations(
   userId: string,
-  userData: any,
+  userData: UserLearningData,
   limit: number
 ): Promise<RecommendationSection> {
   const topTool = userData.preferredTools[0];
@@ -433,35 +534,40 @@ async function getToolSpecificRecommendations(
   };
 }
 
-function transformLessonsToMetadata(lessons: any[]): LessonWithMetadata[] {
-  return lessons.map(lesson => ({
-    id: lesson.id,
-    lessonNumber: lesson.lessonNumber,
-    title: lesson.title,
-    description: lesson.description,
-    estimatedTime: lesson.estimatedTime,
-    difficultyLevel: lesson.difficultyLevel,
-    tools: lesson.tools,
-    isFree: lesson.isFree,
-    createdAt: lesson.createdAt,
-    updatedAt: lesson.updatedAt,
-    categories: lesson.categories.map((cat: any) => ({
-      id: cat.category.id,
-      name: cat.category.name,
-      color: cat.category.color,
-      icon: cat.category.icon,
-    })),
-    progress: lesson.progress?.[0] ? {
-      status: lesson.progress[0].status,
-      progressPercentage: lesson.progress[0].progressPercentage,
-      completedAt: lesson.progress[0].completedAt,
-    } : undefined,
-    isBookmarked: lesson.bookmarks && lesson.bookmarks.length > 0,
-    popularity: lesson._count?.interactions || 0,
-    completionRate: 75, // TODO: Calculate actual completion rate
-    previewContent: lesson.description ? 
-      lesson.description.substring(0, 200) + (lesson.description.length > 200 ? '...' : '') : '',
-  }));
+function transformLessonsToMetadata(lessons: LessonWithIncludes[]): LessonWithMetadata[] {
+  return lessons.map(lesson => {
+    // Type guard to check if lesson has progress and bookmarks
+    const hasProgressAndBookmarks = 'progress' in lesson && 'bookmarks' in lesson;
+
+    return {
+      id: lesson.id,
+      lessonNumber: lesson.lessonNumber,
+      title: lesson.title,
+      description: lesson.description,
+      estimatedTime: lesson.estimatedTime,
+      difficultyLevel: lesson.difficultyLevel,
+      tools: lesson.tools,
+      isFree: lesson.isFree,
+      createdAt: lesson.createdAt,
+      updatedAt: lesson.updatedAt,
+      categories: lesson.categories.map((cat) => ({
+        id: cat.category.id,
+        name: cat.category.name,
+        color: cat.category.color,
+        icon: cat.category.icon,
+      })),
+      progress: hasProgressAndBookmarks && lesson.progress?.[0] ? {
+        status: lesson.progress[0].status,
+        progressPercentage: lesson.progress[0].progressPercentage,
+        completedAt: lesson.progress[0].completedAt,
+      } : undefined,
+      isBookmarked: hasProgressAndBookmarks && lesson.bookmarks ? lesson.bookmarks.length > 0 : false,
+      popularity: lesson._count?.interactions || 0,
+      completionRate: 75, // TODO: Calculate actual completion rate
+      previewContent: lesson.description ?
+        lesson.description.substring(0, 200) + (lesson.description.length > 200 ? '...' : '') : '',
+    };
+  });
 }
 
 function getMostFrequent<T>(array: T[]): T[] {
