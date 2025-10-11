@@ -1,11 +1,12 @@
 /**
  * Notification Service
- * 
+ *
  * Handles sending achievement and certification notifications
  */
 
 import { PrismaClient } from '@prisma/client';
 import { NotificationBatch } from './types';
+import { appLogger } from '@/lib/logger';
 
 export class NotificationService {
   constructor(private prisma: PrismaClient) {}
@@ -64,13 +65,13 @@ export class NotificationService {
           await this.sendNotificationEmail(user, userAchievements, userCertifications);
           sentCount++;
         } catch (error) {
-          console.error(`Failed to send notification to user ${notification.userId}:`, error);
+          appLogger.error(`Failed to send notification to user ${notification.userId}`, { error, userId: notification.userId });
         }
       }
 
       return sentCount;
     } catch (error) {
-      console.error('Error in batch notification sending:', error);
+      appLogger.error('Error in batch notification sending', { error });
       return 0;
     }
   }
@@ -94,7 +95,7 @@ export class NotificationService {
         });
       }
     } catch (emailError) {
-      console.error('Failed to send achievement notification email:', emailError);
+      appLogger.error('Failed to send achievement notification email', { error: emailError, userEmail: user.email });
       // Continue processing - email failures shouldn't stop background jobs
     }
   }

@@ -47,12 +47,16 @@ export function initializeMonitoring() {
  */
 function initializeSentry() {
   if (!process.env.NEXT_PUBLIC_SENTRY_DSN) {
-    console.warn('Sentry DSN not configured - error tracking disabled');
+    if (typeof window !== 'undefined') {
+      console.warn('Sentry DSN not configured - error tracking disabled');
+    }
     return;
   }
 
   // Temporarily disabled to fix webpack module loading issues
-  console.log('Sentry initialization temporarily disabled');
+  if (typeof window !== 'undefined') {
+    console.log('Sentry initialization temporarily disabled');
+  }
   return;
 
   // Dynamic import to avoid bundling Sentry in development
@@ -97,7 +101,9 @@ function initializeSentry() {
       }
     }
   }).catch((error) => {
-    console.warn('Failed to initialize Sentry:', error);
+    if (typeof window !== 'undefined') {
+      console.warn('Failed to initialize Sentry:', error);
+    }
   });
 }
 
@@ -106,7 +112,9 @@ function initializeSentry() {
  */
 function initializePostHog() {
   if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) {
-    console.warn('PostHog key not configured - user analytics disabled');
+    if (typeof window !== 'undefined') {
+      console.warn('PostHog key not configured - user analytics disabled');
+    }
     return;
   }
 
@@ -127,7 +135,9 @@ function initializePostHog() {
       },
     });
   }).catch((error) => {
-    console.warn('Failed to initialize PostHog:', error);
+    if (typeof window !== 'undefined') {
+      console.warn('Failed to initialize PostHog:', error);
+    }
   });
 }
 
@@ -138,7 +148,7 @@ function setupPerformanceMonitoring() {
   if (typeof window === 'undefined') return;
 
   // Web vitals tracking temporarily disabled for build compatibility
-  console.log('Web vitals tracking disabled during debugging');
+  // Note: This is client-side only, no logging needed
 
   // Track custom performance metrics
   setupCustomPerformanceTracking();
@@ -235,8 +245,8 @@ export function logError(
     userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : undefined,
   };
 
-  // Log to console in development
-  if (process.env.NODE_ENV === 'development') {
+  // Log to console in development (client-side only)
+  if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
     console.error('Error logged:', errorData);
   }
 
@@ -269,8 +279,8 @@ export function trackEvent(event: MonitoringEvent) {
     timestamp: event.timestamp || new Date(),
   };
 
-  // Log to console in development
-  if (process.env.NODE_ENV === 'development') {
+  // Log to console in development (client-side only)
+  if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
     console.log('Event tracked:', eventData);
   }
 
@@ -295,8 +305,8 @@ export function trackEvent(event: MonitoringEvent) {
  * Public API for reporting performance metrics
  */
 export function reportPerformanceMetric(metric: PerformanceMetric) {
-  // Log to console in development
-  if (process.env.NODE_ENV === 'development') {
+  // Log to console in development (client-side only)
+  if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
     console.log('Performance metric:', metric);
   }
 

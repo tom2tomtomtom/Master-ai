@@ -1,12 +1,13 @@
 /**
  * Certification Verification Service
- * 
+ *
  * Handles verification of issued certifications
  */
 
 import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 import { CertificationVerificationResult } from './types';
+import { appLogger } from '@/lib/logger';
 
 export class CertificationVerificationService {
   constructor(private prisma: PrismaClient) {}
@@ -58,7 +59,7 @@ export class CertificationVerificationService {
       };
 
     } catch (error) {
-      console.error('Error verifying certification:', error);
+      appLogger.error('Error verifying certification', { error, verificationCode });
       return { isValid: false };
     }
   }

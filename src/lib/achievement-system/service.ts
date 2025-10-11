@@ -1,6 +1,6 @@
 /**
  * Main Achievement System Service
- * 
+ *
  * Orchestrates all achievement system functionality
  */
 
@@ -11,6 +11,7 @@ import { AchievementAwardsService } from './awards';
 import { AchievementLeaderboardService } from './leaderboard';
 import { ActivityTrackerService } from './activity-tracker';
 import { AchievementCalculations } from './calculations';
+import { appLogger } from '@/lib/logger';
 
 export class AchievementSystemService {
   private progressService: AchievementProgressService;
@@ -40,7 +41,7 @@ export class AchievementSystemService {
 
       return newAchievements;
     } catch (error) {
-      console.error('Error processing user activity:', error);
+      appLogger.error('Error processing user activity', { error, userId });
       throw new Error('Failed to process user activity');
     }
   }

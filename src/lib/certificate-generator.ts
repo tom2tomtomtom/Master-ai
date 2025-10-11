@@ -1,6 +1,6 @@
 /**
  * CertificateGenerator - Service for generating professional PDF certificates
- * 
+ *
  * This service handles:
  * - Creating professional PDF certificates with templates
  * - Dynamic content insertion (names, dates, verification codes)
@@ -13,6 +13,7 @@ import { PrismaClient } from '@prisma/client';
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
+import { appLogger } from '@/lib/logger';
 
 export interface CertificateData {
   userName: string;
@@ -101,7 +102,7 @@ export class CertificateGenerator {
 
       return `/certificates/${fileName}`;
     } catch (error) {
-      console.error('Error generating certificate:', error);
+      appLogger.error('Error generating certificate', { error });
       throw new Error('Failed to generate certificate');
     }
   }
@@ -429,7 +430,7 @@ export class CertificateGenerator {
 
       return userCert.certificateUrl;
     } catch (error) {
-      console.error('Error getting certificate URL:', error);
+      appLogger.error('Error getting certificate URL', { error });
       return null;
     }
   }
@@ -444,7 +445,7 @@ export class CertificateGenerator {
         data: { certificateUrl: url },
       });
     } catch (error) {
-      console.error('Error updating certificate URL:', error);
+      appLogger.error('Error updating certificate URL', { error });
       throw new Error('Failed to update certificate URL');
     }
   }
@@ -487,7 +488,7 @@ export class CertificateGenerator {
 
       return certificateUrl;
     } catch (error) {
-      console.error('Error generating user certificate:', error);
+      appLogger.error('Error generating user certificate', { error });
       throw new Error('Failed to generate user certificate');
     }
   }

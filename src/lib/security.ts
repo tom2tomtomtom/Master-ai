@@ -146,8 +146,10 @@ export class InputValidator {
           endpoint: request.nextUrl?.pathname || 'unknown'
         });
       }).catch(() => {
-        // Fallback logging if logger not available
-        console.warn('XSS attempt detected:', original.substring(0, 100));
+        // Fallback logging if logger not available - only on server
+        if (typeof window === 'undefined') {
+          console.warn('XSS attempt detected:', original.substring(0, 100));
+        }
       });
     }
     

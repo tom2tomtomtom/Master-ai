@@ -1,11 +1,12 @@
 /**
  * Achievement Calculations
- * 
+ *
  * Core calculation logic for achievements and progress tracking
  */
 
 import { PrismaClient } from '@prisma/client';
 import { AchievementCriteria, LearningStreak, EligibilityCheckResult } from './types';
+import { appLogger } from '@/lib/logger';
 
 export class AchievementCalculations {
   constructor(private prisma: PrismaClient) {}
@@ -86,7 +87,7 @@ export class AchievementCalculations {
         lastActivityDate: completions[0]?.completedAt || null,
       };
     } catch (error) {
-      console.error('Error calculating learning streak:', error);
+      appLogger.error('Error calculating learning streak', { error, userId });
       return { currentStreak: 0, longestStreak: 0, lastActivityDate: null };
     }
   }

@@ -83,7 +83,7 @@ const createPrismaClient = () => {
         buildTime: isBuildTime
       })
     } else {
-      console.error('Prisma client creation error during build:', errorToLog.message)
+      appLogger.error('Prisma client creation error during build', { error: errorToLog })
     }
     
     throw error
@@ -145,7 +145,7 @@ export async function ensureConnection(): Promise<boolean> {
     attempt++
     
     try {
-      console.log(`🔌 Database connection attempt ${attempt}/${effectiveMaxRetries}...`)
+      appLogger.info(`Database connection attempt ${attempt}/${effectiveMaxRetries}`, { component: 'database_connection', attempt, maxRetries: effectiveMaxRetries })
       
       // Create a timeout promise for build time
       const connectionPromise = prisma.$queryRaw`SELECT 1 as test`
@@ -162,37 +162,42 @@ export async function ensureConnection(): Promise<boolean> {
       }
       
       if (result) {
-        console.log('✅ Database connection successful')
+        appLogger.info('Database connection successful', { component: 'database_connection', attempt })
         isConnected = true
         return true
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      console.error(`❌ Connection attempt ${attempt} failed:`, errorMessage)
-      
+      appLogger.error(`Connection attempt ${attempt} failed`, {
+        error,
+        component: 'database_connection',
+        attempt,
+        errorMessage
+      })
+
       // Specific handling for Supabase/PostgreSQL errors
       if (errorMessage.includes('ENOTFOUND') || errorMessage.includes('pooler.supabase.com')) {
-        console.log('🔄 Supabase pooler connection failed, will retry...')
+        appLogger.warn('Supabase pooler connection failed, will retry', { component: 'database_connection' })
       } else if (errorMessage.includes('connection limit')) {
-        console.log('🚫 Connection pool limit reached, waiting longer...')
+        appLogger.warn('Connection pool limit reached, waiting longer', { component: 'database_connection' })
       } else if (errorMessage.includes('Build time connection timeout')) {
-        console.log('⏱️  Build time connection timeout - proceeding with fallback')
+        appLogger.info('Build time connection timeout - proceeding with fallback', { component: 'database_connection' })
         break
       }
       
       // Don't wait on final attempt or during build
       if (attempt < effectiveMaxRetries && !isBuildTime) {
         const waitTime = Math.min(2000 * attempt, 8000) // 2s, 4s, 8s
-        console.log(`⏳ Waiting ${waitTime}ms before retry...`)
+        appLogger.info(`Waiting ${waitTime}ms before retry`, { component: 'database_connection', waitTime })
         await new Promise(resolve => setTimeout(resolve, waitTime))
       }
     }
   }
   
   if (isBuildTime) {
-    console.warn('⚠️  Database connection failed during build - fallback mode will be used at runtime')
+    appLogger.warn('Database connection failed during build - fallback mode will be used at runtime', { component: 'database_connection' })
   } else {
-    console.error('🚨 All database connection attempts failed. Using fallback mode.')
+    appLogger.error('All database connection attempts failed. Using fallback mode', { component: 'database_connection' })
   }
   return false
 }
@@ -216,8 +221,10 @@ export async function safeQuery<T>(queryFn: () => Promise<T>, fallback?: T): Pro
       try {
         return await Promise.race([queryPromise, timeoutPromise])
       } catch (buildError) {
-        console.warn('Build time database query failed, using fallback:', 
-          buildError instanceof Error ? buildError.message : 'Unknown error')
+        appLogger.warn('Build time database query failed, using fallback', {
+          error: buildError,
+          component: 'database_query'
+        })
         return fallback || null
       }
     }
@@ -225,20 +232,20 @@ export async function safeQuery<T>(queryFn: () => Promise<T>, fallback?: T): Pro
     // For runtime, use full connection retry logic
     const connected = await ensureConnection()
     if (!connected) {
-      console.warn('Database connection failed, using fallback')
+      appLogger.warn('Database connection failed, using fallback', { component: 'database_query' })
       return fallback || null
     }
     
     return await queryFn()
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    
+
     if (isProduction && !isBuildTime) {
-      console.error('Database query failed in production:', errorMessage)
+      appLogger.error('Database query failed in production', { error, errorMessage, component: 'database_query' })
     } else {
-      console.error('Database query failed:', errorMessage)
+      appLogger.error('Database query failed', { error, errorMessage, component: 'database_query' })
     }
-    
+
     return fallback || null
   }
 }
@@ -249,7 +256,11 @@ if (process.env.NODE_ENV !== 'production') {
   try {
     (prisma as any).$on('query', (e: any) => {
       if (e.duration > 1000) { // Log slow queries (>1s)
-        console.warn(`🐌 Slow query detected (${e.duration}ms):`, e.query.substring(0, 100))
+        appLogger.warn(`Slow query detected (${e.duration}ms)`, {
+          component: 'database_query',
+          duration: e.duration,
+          query: e.query.substring(0, 100)
+        })
       }
     })
   } catch (error) {
@@ -262,19 +273,19 @@ export async function disconnectPrisma() {
   try {
     await prisma.$disconnect()
     isConnected = false
-    console.log('✅ Database disconnected gracefully')
+    appLogger.info('Database disconnected gracefully', { component: 'database_connection' })
   } catch (error) {
-    console.error('Error disconnecting from database:', error)
+    appLogger.error('Error disconnecting from database', { error, component: 'database_connection' })
   }
 }
 
 // Connection health check
 export async function checkDatabaseHealth(): Promise<boolean> {
   try {
-    await prisma.$queryRaw`SELECT version()` 
+    await prisma.$queryRaw`SELECT version()`
     return true
   } catch (error) {
-    console.error('Database health check failed:', error)
+    appLogger.error('Database health check failed', { error, component: 'database_health' })
     return false
   }
 }

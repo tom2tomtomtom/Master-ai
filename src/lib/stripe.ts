@@ -1,9 +1,10 @@
 import Stripe from 'stripe'
+import { appLogger } from '@/lib/logger'
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY
 
 if (!STRIPE_SECRET_KEY) {
-  console.warn('⚠️ STRIPE_SECRET_KEY is not set. Stripe functionality will be unavailable.')
+  appLogger.warn('STRIPE_SECRET_KEY is not set. Stripe functionality will be unavailable.')
 }
 
 export const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY, {

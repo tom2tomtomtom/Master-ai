@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { PrismaClient, UserRole } from '@prisma/client';
 import type { User } from '@supabase/supabase-js'
+import { appLogger } from '@/lib/logger';
 
 // Initialize Prisma client with better error handling
 let prisma: PrismaClient | null = null;
@@ -12,7 +13,7 @@ function getPrismaClient(): PrismaClient | null {
     try {
       prisma = new PrismaClient();
     } catch (error) {
-      console.warn('Failed to initialize Prisma client:', error);
+      appLogger.warn('Failed to initialize Prisma client', { error });
       return null;
     }
   }
@@ -53,7 +54,7 @@ export async function getAuthenticatedUser(): Promise<ExtendedUser | null> {
   try {
     // Check for required environment variables
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.warn('Supabase environment variables not configured for server auth');
+      appLogger.warn('Supabase environment variables not configured for server auth');
       return null;
     }
     
@@ -90,7 +91,7 @@ export async function getAuthenticatedUser(): Promise<ExtendedUser | null> {
           }
         });
       } catch (error) {
-        console.warn('Failed to fetch user role from database:', error);
+        appLogger.warn('Failed to fetch user role from database', { error });
       }
     }
 
@@ -99,7 +100,7 @@ export async function getAuthenticatedUser(): Promise<ExtendedUser | null> {
       role: dbUser?.role || UserRole.USER
     } as ExtendedUser;
   } catch (error) {
-    console.error('Error getting authenticated user:', error);
+    appLogger.error('Error getting authenticated user', { error });
     return null;
   }
 }
@@ -171,8 +172,8 @@ export function handleAuthError(error: unknown) {
       }
     );
   }
-  
-  console.error('Unexpected authorization error:', error);
+
+  appLogger.error('Unexpected authorization error', { error });
   return new Response(
     JSON.stringify({ error: 'Internal server error' }),
     { 
@@ -232,7 +233,7 @@ export async function logAdminAction(
     details: details || {}
   };
 
-  console.log('ADMIN_ACTION:', JSON.stringify(logEntry, null, 2));
+  appLogger.info('ADMIN_ACTION', logEntry);
 }
 
 /**

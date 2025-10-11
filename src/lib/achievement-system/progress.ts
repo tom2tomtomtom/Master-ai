@@ -1,12 +1,13 @@
 /**
  * Achievement Progress Service
- * 
+ *
  * Handles user achievement progress tracking and reporting
  */
 
 import { PrismaClient } from '@prisma/client';
 import { AchievementProgress } from './types';
 import { AchievementCalculations } from './calculations';
+import { appLogger } from '@/lib/logger';
 
 export class AchievementProgressService {
   private calculations: AchievementCalculations;
@@ -97,7 +98,7 @@ export class AchievementProgressService {
         metadata: ua.metadata,
       }));
     } catch (error) {
-      console.error('Error getting user achievements:', error);
+      appLogger.error('Error getting user achievements', { error, userId });
       throw new Error('Failed to get user achievements');
     }
   }

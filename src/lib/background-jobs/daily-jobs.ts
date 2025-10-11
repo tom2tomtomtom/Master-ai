@@ -1,6 +1,6 @@
 /**
  * Daily Jobs Service
- * 
+ *
  * Handles daily achievement and certification checks for all users
  */
 
@@ -11,6 +11,7 @@ import { cleanupExpiredResetTokens } from '../password-reset';
 import { JobResult, BatchProcessingResult, ActiveUser } from './types';
 import { createBatches, Semaphore, sleep } from './utils';
 import { NotificationService } from './notifications';
+import { appLogger } from '@/lib/logger';
 
 export class DailyJobsService {
   private notificationService: NotificationService;
@@ -30,7 +31,7 @@ export class DailyJobsService {
       // Get active users with optimized query (reduced data fetch)
       const activeUsers = await this.getActiveUsers();
 
-      console.log(`Processing daily jobs for ${activeUsers.length} active users`);
+      appLogger.info(`Processing daily jobs for ${activeUsers.length} active users`, { component: 'daily_jobs', userCount: activeUsers.length });
 
       // Process users in batches to avoid memory issues and improve performance
       const BATCH_SIZE = 50;
@@ -46,21 +47,26 @@ export class DailyJobsService {
 
       // Process each batch in parallel with concurrency control
       for (const [batchIndex, batch] of batches.entries()) {
-        console.log(`Processing batch ${batchIndex + 1}/${batches.length} (${batch.length} users)`);
-        
+        appLogger.info(`Processing batch ${batchIndex + 1}/${batches.length} (${batch.length} users)`, {
+          component: 'daily_jobs',
+          batchIndex: batchIndex + 1,
+          totalBatches: batches.length,
+          batchSize: batch.length
+        });
+
         try {
           const batchResults = await this.processBatch(batch);
-          
+
           totalProcessed += batchResults.processed;
           totalErrors += batchResults.errors;
           allNotifications.push(...batchResults.notifications);
-          
+
           // Small delay between batches to prevent database overload
           if (batchIndex < batches.length - 1) {
             await sleep(100);
           }
         } catch (error) {
-          console.error(`Batch ${batchIndex + 1} failed:`, error);
+          appLogger.error(`Batch ${batchIndex + 1} failed`, { error, batchIndex: batchIndex + 1, component: 'daily_jobs' });
           totalErrors += batch.length;
         }
       }
@@ -155,7 +161,7 @@ export class DailyJobsService {
 
         processed++;
       } catch (error) {
-        console.error(`Error processing user ${user.id}:`, error);
+        appLogger.error(`Error processing user ${user.id}`, { error, userId: user.id, component: 'daily_jobs' });
         errors++;
       } finally {
         semaphore.release(user.id);

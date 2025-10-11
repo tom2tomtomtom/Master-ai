@@ -1,6 +1,6 @@
 /**
  * Statistics Update Service
- * 
+ *
  * Handles updating user statistics for all active users
  */
 
@@ -8,6 +8,7 @@ import { PrismaClient } from '@prisma/client';
 import { achievementSystem } from '../achievement-system';
 import { JobResult } from './types';
 import { createBatches, processConcurrentBatches } from './utils';
+import { appLogger } from '@/lib/logger';
 
 export class StatsUpdateService {
   constructor(private prisma: PrismaClient) {}
@@ -30,7 +31,7 @@ export class StatsUpdateService {
         take: 2000, // Reasonable limit to prevent memory issues
       });
 
-      console.log(`Updating statistics for ${users.length} users`);
+      appLogger.info(`Updating statistics for ${users.length} users`, { component: 'stats_update', userCount: users.length });
 
       // Process users in parallel batches
       const BATCH_SIZE = 25; // Smaller batches for stats updates

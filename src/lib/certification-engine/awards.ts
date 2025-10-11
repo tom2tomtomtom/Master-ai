@@ -1,6 +1,6 @@
 /**
  * Certification Awards Service
- * 
+ *
  * Handles awarding certifications to users
  */
 
@@ -8,6 +8,7 @@ import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 import { CertificationAward } from './types';
 import { CertificationEligibilityService } from './eligibility';
+import { appLogger } from '@/lib/logger';
 
 export class CertificationAwardsService {
   private eligibilityService: CertificationEligibilityService;
@@ -83,7 +84,7 @@ export class CertificationAwardsService {
       };
 
     } catch (error) {
-      console.error('Error awarding certification:', error);
+      appLogger.error('Error awarding certification', { error, userId, certificationId });
       throw new Error(`Failed to award certification: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -101,14 +102,14 @@ export class CertificationAwardsService {
           await this.awardCertification(userId, certificationId);
           awarded.push(certificationId);
         } catch (error) {
-          console.error(`Failed to auto-award certification ${certificationId}:`, error);
+          appLogger.error(`Failed to auto-award certification ${certificationId}`, { error, userId, certificationId });
           // Continue with other certifications
         }
       }
 
       return awarded;
     } catch (error) {
-      console.error('Error in auto-award process:', error);
+      appLogger.error('Error in auto-award process', { error, userId });
       return [];
     }
   }

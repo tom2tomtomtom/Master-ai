@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { appLogger } from '@/lib/logger';
 
 /**
  * Generate a secure password reset token
@@ -54,7 +55,7 @@ export async function createPasswordResetToken(email: string): Promise<{ success
 
     return { success: true };
   } catch (error) {
-    console.error('Create password reset token error:', error);
+    appLogger.error('Create password reset token error', { error });
     return { success: false, error: 'Failed to create reset token' };
   }
 }
@@ -105,7 +106,7 @@ export async function verifyResetToken(token: string): Promise<{
       }
     };
   } catch (error) {
-    console.error('Verify reset token error:', error);
+    appLogger.error('Verify reset token error', { error });
     return { valid: false, error: 'Failed to verify token' };
   }
 }
@@ -141,7 +142,7 @@ export async function resetPasswordWithToken(
 
     return { success: true };
   } catch (error) {
-    console.error('Reset password error:', error);
+    appLogger.error('Reset password error', { error });
     return { success: false, error: 'Failed to reset password' };
   }
 }
@@ -165,7 +166,7 @@ export async function cleanupExpiredResetTokens(): Promise<number> {
 
     return result.count;
   } catch (error) {
-    console.error('Cleanup expired tokens error:', error);
+    appLogger.error('Cleanup expired tokens error', { error });
     return 0;
   }
 }
