@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { appLogger } from '@/lib/logger';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,7 +60,7 @@ export function BookmarkPanel({
         setIsEditing(false);
       }
     } catch (error) {
-      console.error('Error creating bookmark:', error);
+      appLogger.error('Error creating bookmark:', { error: error, component: 'bookmark-panel' });
     } finally {
       setIsSubmitting(false);
     }
@@ -86,7 +87,7 @@ export function BookmarkPanel({
         setIsEditing(false);
       }
     } catch (error) {
-      console.error('Error updating bookmark:', error);
+      appLogger.error('Error updating bookmark:', { error: error, component: 'bookmark-panel' });
     } finally {
       setIsSubmitting(false);
     }
@@ -105,7 +106,7 @@ export function BookmarkPanel({
         onBookmarkChange(null);
       }
     } catch (error) {
-      console.error('Error deleting bookmark:', error);
+      appLogger.error('Error deleting bookmark:', { error: error, component: 'bookmark-panel' });
     } finally {
       setIsSubmitting(false);
     }

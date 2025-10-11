@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase-client'
+import { appLogger } from '@/lib/logger'
 
 interface AuthContextType {
   user: User | null
@@ -21,7 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const getInitialSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession()
       if (error) {
-        console.error('Error getting session:', error)
+        appLogger.error('Error getting session', { error, component: 'AuthProvider' })
       } else {
         setUser(session?.user ?? null)
       }
@@ -33,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth state changed:', event)
+        appLogger.info('Auth state changed', { event, userId: session?.user?.id, component: 'AuthProvider' })
         setUser(session?.user ?? null)
         setLoading(false)
       }
@@ -45,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut()
     if (error) {
-      console.error('Error signing out:', error)
+      appLogger.error('Error signing out', { error, component: 'AuthProvider' })
     } else {
       setUser(null)
       // Redirect to home page

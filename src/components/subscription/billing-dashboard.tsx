@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { appLogger } from '@/lib/logger';
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -73,7 +74,7 @@ export function BillingDashboard() {
         setInvoices(invoicesData.invoices || [])
       }
     } catch (error) {
-      console.error('Error fetching billing data:', error)
+      appLogger.error('Error fetching billing data:', { error: error, component: 'billing-dashboard' })
       toast.error('Failed to load billing data')
     } finally {
       setLoading(false)

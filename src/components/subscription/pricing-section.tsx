@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { appLogger } from '@/lib/logger';
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PricingCard } from './pricing-card'
@@ -94,7 +95,7 @@ export function PricingSection({
         }
       }
     } catch (error) {
-      console.error('Upgrade error:', error)
+      appLogger.error('Upgrade error:', { error: error, component: 'pricing-section' })
       toast.error(error instanceof Error ? error.message : 'Failed to process upgrade')
     } finally {
       setLoading(false)

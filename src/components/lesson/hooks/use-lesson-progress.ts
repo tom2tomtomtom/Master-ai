@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { appLogger } from '@/lib/logger';
 import { useAuth } from '@/components/providers/safe-auth-provider';
 import { calculateReadingProgress } from '@/lib/markdown';
 
@@ -57,7 +58,7 @@ export function useLessonProgress({ lessonId, onCompletionModalShow }: UseLesson
         setReadingProgress(data.progressPercentage);
       }
     } catch (error) {
-      console.error('Error loading progress:', error);
+      appLogger.error('Error loading progress:', { error: error, component: 'use-lesson-progress' });
     }
   };
 
@@ -78,7 +79,7 @@ export function useLessonProgress({ lessonId, onCompletionModalShow }: UseLesson
         }),
       });
     } catch (error) {
-      console.error('Error updating progress:', error);
+      appLogger.error('Error updating progress:', { error: error, component: 'use-lesson-progress' });
     }
   };
 
@@ -107,7 +108,7 @@ export function useLessonProgress({ lessonId, onCompletionModalShow }: UseLesson
         onCompletionModalShow();
       }
     } catch (error) {
-      console.error('Error marking lesson as completed:', error);
+      appLogger.error('Error marking lesson as completed:', { error: error, component: 'use-lesson-progress' });
     }
   };
 

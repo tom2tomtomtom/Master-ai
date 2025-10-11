@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { appLogger } from '@/lib/logger';
 import { processMarkdown } from '@/lib/markdown';
 import { monitoring } from '@/lib/monitoring';
 
@@ -88,7 +89,7 @@ export function useLessonState(lesson: Lesson) {
         setNotes(data);
       }
     } catch (error) {
-      console.error('Error loading notes:', error);
+      appLogger.error('Error loading notes:', { error: error, component: 'use-lesson-state' });
     }
   };
 
@@ -100,7 +101,7 @@ export function useLessonState(lesson: Lesson) {
         setBookmark(data);
       }
     } catch (error) {
-      console.error('Error loading bookmark:', error);
+      appLogger.error('Error loading bookmark:', { error: error, component: 'use-lesson-state' });
     }
   };
 
@@ -130,7 +131,7 @@ export function useLessonState(lesson: Lesson) {
         }
       }
     } catch (error) {
-      console.error('Error toggling bookmark:', error);
+      appLogger.error('Error toggling bookmark:', { error: error, component: 'use-lesson-state' });
     }
   };
 

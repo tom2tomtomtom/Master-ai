@@ -76,7 +76,7 @@ export default function DiscoverPage() {
         context: 'fetch_search_results',
         searchParams: params,
       });
-      console.error('Failed to fetch search results:', error);
+      appLogger.error('Failed to fetch search results', { error, component: 'DiscoverPage' });
     } finally {
       setIsLoading(false);
     }
@@ -99,7 +99,7 @@ export default function DiscoverPage() {
         context: 'fetch_recommendations',
         userId: session.user.id,
       });
-      console.error('Failed to fetch recommendations:', error);
+      appLogger.error('Failed to fetch recommendations', { error, component: 'DiscoverPage' });
     }
   }, [session?.user?.id]);
 
@@ -129,7 +129,7 @@ export default function DiscoverPage() {
   const handleLessonBookmark = async (lessonId: string, isBookmarked: boolean) => {
     // The interaction tracking is already handled in the LessonCard component
     // You might want to update local state here if needed
-    console.log(`Lesson ${lessonId} ${isBookmarked ? 'bookmarked' : 'unbookmarked'}`);
+    appLogger.info(`Lesson ${isBookmarked ? 'bookmarked' : 'unbookmarked'}`, { lessonId, component: 'DiscoverPage' });
   };
 
   // Auto-switch to search when user searches or filters

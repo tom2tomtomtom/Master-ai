@@ -15,11 +15,11 @@ import { ProgressRing } from '@/components/ui/progress-ring';
 import { SubscriptionWidget } from '@/components/subscription/subscription-widget';
 import { GlassCard } from '@/components/ui/glass-card';
 
-import { 
-  BookOpen, 
-  Clock, 
-  Award, 
-  TrendingUp, 
+import {
+  BookOpen,
+  Clock,
+  Award,
+  TrendingUp,
   Flame,
   Target,
   Calendar,
@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 
 import type { DashboardStats, LearningPathWithProgress, RecentActivity } from '@/types/dashboard';
+import { appLogger } from '@/lib/logger';
 
 export default function DashboardPage(): JSX.Element {
   const { user, session, loading: authLoading, isAuthenticated } = useAuth();
@@ -60,7 +61,7 @@ export default function DashboardPage(): JSX.Element {
             const statsData = await statsRes.value.json();
             setStats(statsData);
           } catch (e) {
-            console.warn('Failed to parse stats response:', e);
+            appLogger.warn('Failed to parse stats response', { error: e, component: 'DashboardPage' });
           }
         } else {
           // Set default stats for new users
@@ -85,7 +86,7 @@ export default function DashboardPage(): JSX.Element {
             const progressData = await progressRes.value.json();
             setLearningPaths(Array.isArray(progressData) ? progressData : []);
           } catch (e) {
-            console.warn('Failed to parse progress response:', e);
+            appLogger.warn('Failed to parse progress response', { error: e, component: 'DashboardPage' });
             setLearningPaths([]);
           }
         } else {
@@ -98,7 +99,7 @@ export default function DashboardPage(): JSX.Element {
             const activityData = await activityRes.value.json();
             setRecentActivity(Array.isArray(activityData) ? activityData : []);
           } catch (e) {
-            console.warn('Failed to parse activity response:', e);
+            appLogger.warn('Failed to parse activity response', { error: e, component: 'DashboardPage' });
             setRecentActivity([]);
           }
         } else {
@@ -111,7 +112,7 @@ export default function DashboardPage(): JSX.Element {
             const nextLessonData = await nextLessonRes.value.json();
             setNextLesson(nextLessonData);
           } catch (e) {
-            console.warn('Failed to parse next lesson response:', e);
+            appLogger.warn('Failed to parse next lesson response', { error: e, component: 'DashboardPage' });
           }
         } else {
           // Set a default next lesson for new users
@@ -125,7 +126,7 @@ export default function DashboardPage(): JSX.Element {
           });
         }
       } catch (error) {
-        console.error('Dashboard data fetch error:', error);
+        appLogger.error('Dashboard data fetch error', { error, component: 'DashboardPage' });
         // Set minimal fallback data
         setStats({
           totalLessons: 89,

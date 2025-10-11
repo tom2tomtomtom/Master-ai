@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, forwardRef } from 'react';
+import { appLogger } from '@/lib/logger';
 
 interface EnhancedContentProps {
   content: string;
@@ -84,7 +85,7 @@ export const EnhancedContent = forwardRef<HTMLDivElement, EnhancedContentProps>(
             copyButton.title = 'Copy to clipboard';
           }, 2000);
         } catch (err) {
-          console.error('Failed to copy:', err);
+          appLogger.error('Failed to copy:', { error: err, component: 'enhanced-content' });
           // Fallback method
           const textArea = document.createElement('textarea');
           textArea.value = text;
@@ -156,7 +157,7 @@ export const EnhancedContent = forwardRef<HTMLDivElement, EnhancedContentProps>(
               `;
             }, 2000);
           } catch (err) {
-            console.error('Failed to copy:', err);
+            appLogger.error('Failed to copy:', { error: err, component: 'enhanced-content' });
           }
         });
 

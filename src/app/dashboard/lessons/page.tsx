@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Clock, BookOpen, Star } from 'lucide-react';
+import { appLogger } from '@/lib/logger';
 
 // Force this page to be dynamically rendered instead of statically generated
 // Removed force-dynamic to prevent hydration issues
@@ -12,7 +13,7 @@ import { Clock, BookOpen, Star } from 'lucide-react';
 
 async function getLessons() {
   try {
-    console.log('Fetching lessons from database...');
+    appLogger.info('Fetching lessons from database', { component: 'LessonsPage' });
     const lessons = await prisma.lesson.findMany({
       where: { isPublished: true },
       select: {
@@ -29,10 +30,10 @@ async function getLessons() {
       take: 50, // Show first 50 lessons
     });
 
-    console.log(`Successfully fetched ${lessons.length} lessons from database`);
+    appLogger.info(`Successfully fetched lessons from database`, { count: lessons.length, component: 'LessonsPage' });
     return lessons;
   } catch (error) {
-    console.error('Error fetching lessons:', error);
+    appLogger.error('Error fetching lessons', { error, component: 'LessonsPage' });
     
     // Minimal fallback for error cases - use real lesson IDs
     const fallbackLessons = [

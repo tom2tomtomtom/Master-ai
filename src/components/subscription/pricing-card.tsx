@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { appLogger } from '@/lib/logger';
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -114,7 +115,7 @@ export function PricingCard({
       try {
         await onUpgrade(tier, interval, tier === 'team' ? quantity : undefined)
       } catch (error) {
-        console.error('Upgrade failed:', error)
+        appLogger.error('Upgrade failed:', { error: error, component: 'pricing-card' })
       } finally {
         setIsLoading(false)
       }

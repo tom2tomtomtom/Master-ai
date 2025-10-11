@@ -6,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  Bookmark, 
-  BookOpen, 
-  Clock, 
+import {
+  Bookmark,
+  BookOpen,
+  Clock,
   Play,
   Search,
   Calendar,
@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
+import { appLogger } from '@/lib/logger';
 
 interface BookmarkData {
   id: string;
@@ -62,16 +63,7 @@ export default function BookmarksPage() {
           setFilteredBookmarks(data);
         }
       } catch (error) {
-        // Log error with context using structured logging
-        if (typeof window !== 'undefined') {
-          // Client-side error logging
-          const { clientLogger } = await import('@/lib/client-logger');
-          clientLogger.logError('Failed to fetch bookmarks', error, {
-            component: 'BookmarksPage',
-            action: 'fetchBookmarks'
-          });
-        }
-        console.error('Error fetching bookmarks:', error);
+        appLogger.error('Failed to fetch bookmarks', { error, component: 'BookmarksPage' });
       } finally {
         setLoading(false);
       }

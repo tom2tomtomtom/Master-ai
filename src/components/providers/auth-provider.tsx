@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase-client'
 import type { User, Session } from '@supabase/supabase-js'
+import { appLogger } from '@/lib/logger'
 
 interface AuthContextType {
   user: User | null
@@ -31,24 +32,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const getInitialSession = async () => {
       try {
         if (!supabase) {
-          console.warn('Supabase not initialized, skipping auth setup')
+          appLogger.warn('Supabase not initialized, skipping auth setup', { component: 'AuthProvider' })
           setLoading(false)
           return
         }
-        
+
         const { data: { session }, error } = await supabase.auth.getSession()
-        
+
         if (error) {
-          console.error('Error getting session:', error)
+          appLogger.error('Error getting session', { error, component: 'AuthProvider' })
         } else {
           setSession(session)
           setUser(session?.user ?? null)
-          console.log('🔐 Initial auth session loaded:', !!session)
-          
+          appLogger.info('Initial auth session loaded', { hasSession: !!session, component: 'AuthProvider' })
+
           // User sync will be handled by API routes when needed
         }
       } catch (error) {
-        console.error('Auth initialization error:', error)
+        appLogger.error('Auth initialization error', { error, component: 'AuthProvider' })
       } finally {
         setLoading(false)
       }
@@ -58,26 +59,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     if (!supabase) {
-      console.warn('Supabase not initialized, skipping auth state changes')
+      appLogger.warn('Supabase not initialized, skipping auth state changes', { component: 'AuthProvider' })
       return () => {}
     }
-    
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔐 Auth state change:', event, 'user:', !!session?.user)
-        
+        appLogger.info('Auth state change', { event, hasUser: !!session?.user, component: 'AuthProvider' })
+
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
 
         // Handle specific auth events
         if (event === 'SIGNED_IN' && session?.user) {
-          console.log('✅ User signed in:', session.user.email)
+          appLogger.info('User signed in', { email: session.user.email, component: 'AuthProvider' })
           // User sync will be handled by API routes when needed
         } else if (event === 'SIGNED_OUT') {
-          console.log('👋 User signed out')
+          appLogger.info('User signed out', { component: 'AuthProvider' })
         } else if (event === 'TOKEN_REFRESHED') {
-          console.log('🔄 Token refreshed')
+          appLogger.info('Token refreshed', { component: 'AuthProvider' })
         }
       }
     )
@@ -90,18 +91,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       if (!supabase) {
-        console.warn('Supabase not initialized, cannot sign out')
+        appLogger.warn('Supabase not initialized, cannot sign out', { component: 'AuthProvider' })
         return
       }
-      
+
       const { error } = await supabase.auth.signOut()
       if (error) {
-        console.error('Sign out error:', error)
+        appLogger.error('Sign out error', { error, component: 'AuthProvider' })
         throw error
       }
-      console.log('👋 User signed out successfully')
+      appLogger.info('User signed out successfully', { component: 'AuthProvider' })
     } catch (error) {
-      console.error('Failed to sign out:', error)
+      appLogger.error('Failed to sign out', { error, component: 'AuthProvider' })
       throw error
     }
   }

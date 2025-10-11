@@ -1,6 +1,7 @@
 'use client';
 
 import { Bell, ChevronDown, User, CreditCard, Settings, LogOut, Crown } from 'lucide-react';
+import { appLogger } from '@/lib/logger';
 import { useAuth } from '@/components/providers/safe-auth-provider';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -42,7 +43,7 @@ export function DashboardHeader({ title, subtitle, children }: DashboardHeaderPr
       await signOut();
       router.push('/');
     } catch (error) {
-      console.error('Sign out error:', error);
+      appLogger.error('Sign out error:', { error: error, component: 'header' });
     }
   };
 

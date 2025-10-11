@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase-client';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { monitoring } from '@/lib/monitoring';
+import { appLogger } from '@/lib/logger';
 
 interface OAuthButtonProps {
   provider: 'google';
@@ -61,7 +62,7 @@ export function OAuthButton({ provider, callbackUrl, className }: OAuthButtonPro
           setIsAvailable(providerExists);
         }
       } catch (error) {
-        console.warn(`Failed to check ${provider} provider availability:`, error);
+        appLogger.warn('Failed to check provider availability', { provider, error, component: 'OAuthButton' });
         setIsAvailable(false);
       }
     }
@@ -80,9 +81,9 @@ export function OAuthButton({ provider, callbackUrl, className }: OAuthButtonPro
           redirectTo: `${window.location.origin}${callbackUrl || '/dashboard'}`
         }
       });
-      
+
       if (error) {
-        console.error(`${provider} OAuth error:`, error);
+        appLogger.error('OAuth signin error', { provider, error, callbackUrl, component: 'OAuthButton' });
         monitoring.logError('oauth_signin_error', error, {
           provider,
           callbackUrl,
@@ -91,7 +92,7 @@ export function OAuthButton({ provider, callbackUrl, className }: OAuthButtonPro
         window.location.href = `/auth/signin?error=OAuthCallback&callbackUrl=${encodeURIComponent(callbackUrl || '/dashboard')}`;
       }
     } catch (error) {
-      console.error(`${provider} OAuth error:`, error);
+      appLogger.error('OAuth signin error', { provider, error, callbackUrl, component: 'OAuthButton' });
       monitoring.logError('oauth_signin_error', error, {
         provider,
         callbackUrl,

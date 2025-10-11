@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { appLogger } from '@/lib/logger';
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { 
@@ -64,7 +65,7 @@ export function SubscriptionIndicator() {
         setSubscriptionData(data)
       }
     } catch (error) {
-      console.error('Error fetching subscription data:', error)
+      appLogger.error('Error fetching subscription data:', { error: error, component: 'subscription-indicator' })
     } finally {
       setLoading(false)
     }

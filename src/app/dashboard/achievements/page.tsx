@@ -17,6 +17,7 @@ import {
   ChartBarIcon,
 } from '@heroicons/react/24/outline';
 import { monitoring } from '@/lib/monitoring';
+import { appLogger } from '@/lib/logger';
 
 interface Achievement {
   achievementId: string;
@@ -142,25 +143,25 @@ export default function AchievementsPage() {
         const data = await response.json();
         
         // Update the certificate in state
-        setCertificates(prev => 
-          prev.map(cert => 
-            cert.id === certificateId 
+        setCertificates(prev =>
+          prev.map(cert =>
+            cert.id === certificateId
               ? { ...cert, certificateUrl: data.certificateUrl }
               : cert
           )
         );
 
         // Show success notification
-        console.log('Certificate generated successfully!');
+        appLogger.info('Certificate generated successfully', { certificateId, component: 'AchievementsPage' });
       } else {
         const error = await response.json();
-        console.error(`Error: ${error.error}`);
+        appLogger.error('Certificate generation error', { error: error.error, certificateId, component: 'AchievementsPage' });
       }
     } catch (error) {
       monitoring.logError('certificate_generation_error', error, {
         certificationId: certificateId
       });
-      console.error('Failed to generate certificate');
+      appLogger.error('Failed to generate certificate', { error, certificateId, component: 'AchievementsPage' });
     }
   };
 
@@ -179,11 +180,11 @@ export default function AchievementsPage() {
       });
     } else {
       // Fallback to copying link
-      const url = certificate.verificationCode 
+      const url = certificate.verificationCode
         ? `${window.location.origin}/verify/${certificate.verificationCode}`
         : window.location.href;
       navigator.clipboard.writeText(url);
-      console.log('Certificate link copied to clipboard!');
+      appLogger.info('Certificate link copied to clipboard', { certificateId: certificate.id, component: 'AchievementsPage' });
     }
   };
 

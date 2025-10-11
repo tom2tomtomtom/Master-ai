@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { appLogger } from '@/lib/logger';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -77,7 +78,7 @@ export function NoteTakingPanel({
         setNewNote('');
       }
     } catch (error) {
-      console.error('Error creating note:', error);
+      appLogger.error('Error creating note:', { error: error, component: 'note-taking-panel' });
     } finally {
       setIsSubmitting(false);
     }
@@ -107,7 +108,7 @@ export function NoteTakingPanel({
         setEditContent('');
       }
     } catch (error) {
-      console.error('Error updating note:', error);
+      appLogger.error('Error updating note:', { error: error, component: 'note-taking-panel' });
     } finally {
       setIsSubmitting(false);
     }
@@ -126,7 +127,7 @@ export function NoteTakingPanel({
         onNotesChange(notes.filter(note => note.id !== noteId));
       }
     } catch (error) {
-      console.error('Error deleting note:', error);
+      appLogger.error('Error deleting note:', { error: error, component: 'note-taking-panel' });
     } finally {
       setIsSubmitting(false);
     }

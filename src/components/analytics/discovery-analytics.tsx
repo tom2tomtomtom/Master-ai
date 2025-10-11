@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { appLogger } from '@/lib/logger';
 import { motion } from 'framer-motion';
 import { 
   Search, 
@@ -92,7 +93,7 @@ export function DiscoveryAnalytics({ className = '' }: DiscoveryAnalyticsProps) 
       
       setMetrics(completeMetrics);
     } catch (error) {
-      console.error('Failed to fetch discovery metrics:', error);
+      appLogger.error('Failed to fetch discovery metrics:', { error: error, component: 'discovery-analytics' });
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { appLogger } from '@/lib/logger';
 import { Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -18,7 +19,7 @@ export function CopyButton({ text, className = '' }: CopyButtonProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy text:', err);
+      appLogger.error('Failed to copy text:', { error: err, component: 'copy-button' });
       // Fallback for older browsers
       const textArea = document.createElement('textarea');
       textArea.value = text;

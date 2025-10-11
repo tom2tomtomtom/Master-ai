@@ -5,12 +5,13 @@
 
 import Redis from 'ioredis';
 import { env } from '@/config/env.schema';
+import { appLogger } from '@/lib/logger';
 
-// Logger placeholder (will be replaced with proper logger)
+// Use structured logging
 const logger = {
-  info: (message: string, ...args: any[]) => console.log(`[INFO] ${message}`, ...args),
-  warn: (message: string, ...args: any[]) => console.warn(`[WARN] ${message}`, ...args),
-  error: (message: string, ...args: any[]) => console.error(`[ERROR] ${message}`, ...args),
+  info: (message: string, context?: any) => appLogger.info(message, { ...context, component: 'RedisClient' }),
+  warn: (message: string, context?: any) => appLogger.warn(message, { ...context, component: 'RedisClient' }),
+  error: (message: string, context?: any) => appLogger.error(message, { ...context, component: 'RedisClient' }),
 };
 
 // Redis client instance
@@ -22,7 +23,7 @@ let redisClient: Redis | null = null;
 const getRedisConfig = (): import('ioredis').RedisOptions => ({
   retryStrategy: (times: number) => {
     const delay = Math.min(times * 50, 2000);
-    logger.warn(`Redis connection retry attempt ${times}, delay: ${delay}ms`);
+    logger.warn('Redis connection retry attempt', { attempt: times, delay });
     return delay;
   },
   reconnectOnError: (err: Error) => {
@@ -67,7 +68,7 @@ export const createRedisClient = async (): Promise<Redis | null> => {
     });
 
     client.on('error', (err: Error) => {
-      logger.error('Redis client error:', err.message);
+      logger.error('Redis client error', { error: err });
     });
 
     client.on('close', () => {
@@ -75,7 +76,7 @@ export const createRedisClient = async (): Promise<Redis | null> => {
     });
 
     client.on('reconnecting', (delay: number) => {
-      logger.info(`Redis client reconnecting in ${delay}ms`);
+      logger.info('Redis client reconnecting', { delay });
     });
 
     client.on('end', () => {
@@ -88,7 +89,7 @@ export const createRedisClient = async (): Promise<Redis | null> => {
 
     return client;
   } catch (error) {
-    logger.error('Failed to create Redis client:', error);
+    logger.error('Failed to create Redis client', { error });
     return null;
   }
 };
@@ -157,7 +158,7 @@ export const cache = {
       const value = await client.get(key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      logger.error(`Cache get error for key ${key}:`, error);
+      logger.error('Cache get error', { key, error });
       return null;
     }
   },
@@ -180,7 +181,7 @@ export const cache = {
       }
       return true;
     } catch (error) {
-      logger.error(`Cache set error for key ${key}:`, error);
+      logger.error('Cache set error', { key, error });
       return false;
     }
   },
@@ -198,7 +199,7 @@ export const cache = {
       const keys = Array.isArray(key) ? key : [key];
       return await client.del(...keys);
     } catch (error) {
-      logger.error(`Cache delete error for key ${key}:`, error);
+      logger.error('Cache delete error', { key, error });
       return 0;
     }
   },
@@ -216,7 +217,7 @@ export const cache = {
       const result = await client.exists(key);
       return result === 1;
     } catch (error) {
-      logger.error(`Cache exists error for key ${key}:`, error);
+      logger.error('Cache exists error', { key, error });
       return false;
     }
   },
@@ -234,7 +235,7 @@ export const cache = {
       const result = await client.expire(key, ttl);
       return result === 1;
     } catch (error) {
-      logger.error(`Cache expire error for key ${key}:`, error);
+      logger.error('Cache expire error', { key, error });
       return false;
     }
   },
@@ -251,7 +252,7 @@ export const cache = {
 
       return await client.ttl(key);
     } catch (error) {
-      logger.error(`Cache TTL error for key ${key}:`, error);
+      logger.error('Cache TTL error', { key, error });
       return -1;
     }
   },
@@ -270,10 +271,10 @@ export const cache = {
       if (keys.length === 0) {
         return 0;
       }
-      
+
       return await client.del(...keys);
     } catch (error) {
-      logger.error(`Cache clear error for pattern ${pattern}:`, error);
+      logger.error('Cache clear error', { pattern, error });
       return 0;
     }
   },
@@ -290,7 +291,7 @@ export const cache = {
 
       return await client.incr(key);
     } catch (error) {
-      logger.error(`Cache increment error for key ${key}:`, error);
+      logger.error('Cache increment error', { key, error });
       return 0;
     }
   },
@@ -307,7 +308,7 @@ export const cache = {
 
       return await client.decr(key);
     } catch (error) {
-      logger.error(`Cache decrement error for key ${key}:`, error);
+      logger.error('Cache decrement error', { key, error });
       return 0;
     }
   },
@@ -325,7 +326,7 @@ export const cache = {
       const value = await client.hget(key, field);
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      logger.error(`Cache hget error for key ${key}, field ${field}:`, error);
+      logger.error('Cache hget error', { key, field, error });
       return null;
     }
   },
@@ -341,7 +342,7 @@ export const cache = {
       await client.hset(key, field, serialized);
       return true;
     } catch (error) {
-      logger.error(`Cache hset error for key ${key}, field ${field}:`, error);
+      logger.error('Cache hset error', { key, field, error });
       return false;
     }
   },
@@ -363,10 +364,10 @@ export const cache = {
           result[field] = value as any;
         }
       }
-      
+
       return result;
     } catch (error) {
-      logger.error(`Cache hgetall error for key ${key}:`, error);
+      logger.error('Cache hgetall error', { key, error });
       return {};
     }
   },
@@ -388,7 +389,7 @@ export const initRedis = async (): Promise<void> => {
       logger.info('Redis cache disabled via configuration');
     }
   } catch (error) {
-    logger.error('Failed to initialize Redis cache:', error);
+    logger.error('Failed to initialize Redis cache', { error });
   }
 };
 
@@ -403,7 +404,7 @@ export const closeRedis = async (): Promise<void> => {
       logger.info('Redis connection closed');
     }
   } catch (error) {
-    logger.error('Error closing Redis connection:', error);
+    logger.error('Error closing Redis connection', { error });
   }
 };
 

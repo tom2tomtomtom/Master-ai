@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { appLogger } from '@/lib/logger';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -78,7 +79,7 @@ export function LessonNavigation({ lessonId, pathId }: LessonNavigationProps) {
           setNavigationData(data);
         }
       } catch (error) {
-        console.error('Error loading navigation:', error);
+        appLogger.error('Error loading navigation:', { error: error, component: 'lesson-navigation' });
       } finally {
         setIsLoading(false);
       }

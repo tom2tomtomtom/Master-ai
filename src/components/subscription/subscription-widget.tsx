@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { appLogger } from '@/lib/logger';
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -92,7 +93,7 @@ export function SubscriptionWidget() {
         setSubscriptionData(data)
       }
     } catch (error) {
-      console.error('Error fetching subscription data:', error)
+      appLogger.error('Error fetching subscription data:', { error: error, component: 'subscription-widget' })
       toast.error('Failed to load subscription data')
     } finally {
       setLoading(false)
@@ -121,7 +122,7 @@ export function SubscriptionWidget() {
       const { url } = await response.json()
       window.location.href = url
     } catch (error) {
-      console.error('Error opening billing portal:', error)
+      appLogger.error('Error opening billing portal:', { error: error, component: 'subscription-widget' })
       toast.error('Failed to open billing portal')
     } finally {
       setActionLoading(false)

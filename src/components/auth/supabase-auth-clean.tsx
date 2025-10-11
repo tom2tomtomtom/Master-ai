@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Eye, EyeOff, Mail, Lock, Chrome } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { appLogger } from '@/lib/logger'
 
 interface SupabaseAuthProps {
   mode?: 'signin' | 'signup'
@@ -107,7 +108,7 @@ export function SupabaseAuthClean({ mode = 'signin', redirectTo = '/dashboard' }
         router.push(redirectTo)
       }
     } catch (error: any) {
-      console.error('Auth error:', error)
+      appLogger.error('Authentication error', { error, mode: isSignUp ? 'signup' : 'signin', component: 'SupabaseAuthClean' })
       setError(error.message || 'Authentication failed')
     } finally {
       setLoading(false)
@@ -132,7 +133,7 @@ export function SupabaseAuthClean({ mode = 'signin', redirectTo = '/dashboard' }
       if (error) throw error
       // OAuth redirect will happen automatically
     } catch (error: any) {
-      console.error('Google auth error:', error)
+      appLogger.error('Google authentication error', { error, component: 'SupabaseAuthClean' })
       setError(error.message || 'Google sign in failed')
       setLoading(false)
     }
