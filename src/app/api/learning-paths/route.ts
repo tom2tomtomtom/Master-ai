@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
+import { getOptionalAuth } from '@/lib/auth-helpers';
+import { appLogger } from '@/lib/logger';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
@@ -12,9 +13,9 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const includeStats = searchParams.get('includeStats') === 'true';
-    
+
     // Get authenticated user for completion rate calculation
-    const authenticatedUser = includeStats ? await getAuthenticatedUser() : null;
+    const authenticatedUser = includeStats ? await getOptionalAuth() : null;
 
     const learningPaths = await prisma.learningPath.findMany({
       where: { isActive: true },
@@ -61,14 +62,14 @@ export async function GET(request: NextRequest) {
         try {
           const userProgress = await prisma.userProgress.findMany({
             where: {
-              userId: authenticatedUser.id,
+              userId: authenticatedUser.userId,
               lessonId: { in: publishedLessons.map(lesson => lesson.id) },
               status: 'completed'
             }
           });
           completionRate = Math.round((userProgress.length / publishedLessons.length) * 100);
         } catch (error) {
-          console.error(`Error calculating completion rate for path ${path.id}:`, error);
+          appLogger.error(`Error calculating completion rate for path ${path.id}`, { error });
           // Keep completion rate as 0 on error
         }
       }
@@ -89,7 +90,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(enrichedPaths);
   } catch (error) {
-    console.error('Error fetching learning paths:', error);
+    appLogger.error('Error fetching learning paths', { error });
     return NextResponse.json(
       { error: 'Failed to fetch learning paths' },
       { status: 500 }
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(learningPath, { status: 201 });
   } catch (error) {
-    console.error('Error creating learning path:', error);
+    appLogger.error('Error creating learning path', { error });
     return NextResponse.json(
       { error: 'Failed to create learning path' },
       { status: 500 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedUser, handleAuthError } from '@/lib/supabase-auth-middleware';
+import { requireAuth, AuthError } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { appLogger, extractRequestMetadata } from '@/lib/logger';
 
@@ -13,20 +13,13 @@ export async function GET(request: NextRequest) {
   const requestMeta = extractRequestMetadata(request);
 
   try {
-    // Get authenticated user
-    const authResult = await getAuthenticatedUser();
-    
-    if (!authResult.success) {
-      appLogger.security.unauthorizedAccess('/api/user/subscription', null, requestMeta);
-      return handleAuthError(authResult.error);
-    }
-
-    const { user: supabaseUser } = authResult;
+    const authUser = await requireAuth();
+    const userId = authUser.userId;
 
     // Get user subscription data from database
     const user = await prisma.user.findUnique({
-      where: { 
-        email: supabaseUser.email 
+      where: {
+        id: userId
       },
       select: {
         id: true,
@@ -38,12 +31,11 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      appLogger.logError('User not found in database', { 
-        supabaseUserId: supabaseUser.id,
-        email: supabaseUser.email,
-        ...requestMeta 
+      appLogger.logError('User not found in database', {
+        userId: userId,
+        ...requestMeta
       });
-      
+
       return NextResponse.json({
         error: 'User not found'
       }, { status: 404 });
@@ -64,8 +56,16 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
+    if (error instanceof AuthError) {
+      appLogger.security.unauthorizedAccess('/api/user/subscription', null, requestMeta);
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
     appLogger.errors.apiError('/api/user/subscription', error as Error, requestMeta);
-    
+
     return NextResponse.json({
       error: 'Internal server error'
     }, { status: 500 });

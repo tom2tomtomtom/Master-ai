@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
+import { requireAuth, AuthError } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { appLogger } from '@/lib/logger';
 import { z } from 'zod';
@@ -14,17 +14,11 @@ const updateProfileSchema = z.object({
 
 export async function GET() {
   try {
-    const authUser = await getAuthenticatedUser();
-    
-    if (!authUser) {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
-      );
-    }
+    const authUser = await requireAuth();
+    const userId = authUser.userId;
 
     const user = await prisma.user.findUnique({
-      where: { id: authUser.id },
+      where: { id: userId },
       select: {
         id: true,
         name: true,
@@ -53,6 +47,13 @@ export async function GET() {
     return NextResponse.json({ user });
 
   } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
     appLogger.errors.apiError('profile-fetch', error as Error, {
       endpoint: '/api/profile'
     });
@@ -65,14 +66,8 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const authUser = await getAuthenticatedUser();
-    
-    if (!authUser) {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
-      );
-    }
+    const authUser = await requireAuth();
+    const userId = authUser.userId;
 
     const body = await request.json();
     const validatedData = updateProfileSchema.parse(body);
@@ -80,9 +75,9 @@ export async function PATCH(request: NextRequest) {
     // Check if email is already taken by another user
     if (validatedData.email) {
       const existingUser = await prisma.user.findUnique({
-        where: { 
+        where: {
           email: validatedData.email,
-          NOT: { id: authUser.id }
+          NOT: { id: userId }
         }
       });
 
@@ -95,7 +90,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const updatedUser = await prisma.user.update({
-      where: { id: authUser.id },
+      where: { id: userId },
       data: validatedData,
       select: {
         id: true,
@@ -114,10 +109,17 @@ export async function PATCH(request: NextRequest) {
     });
 
   } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
     appLogger.errors.apiError('profile-update', error as Error, {
       endpoint: '/api/profile'
     });
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { 
