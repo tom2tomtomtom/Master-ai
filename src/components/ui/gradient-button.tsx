@@ -70,20 +70,35 @@ export interface GradientButtonProps
 }
 
 const GradientButton = React.forwardRef<HTMLButtonElement, GradientButtonProps>(
-  ({ 
-    className, 
-    variant, 
-    size, 
-    asChild = false, 
+  ({
+    className,
+    variant,
+    size,
+    asChild = false,
     loading = false,
     icon,
     iconPosition = 'left',
     children,
     disabled,
-    ...props 
+    ...props
   }, ref) => {
     const Comp = asChild ? Slot : "button";
-    
+
+    // When using asChild, we can't wrap children in additional elements
+    // The icon and loading features are not compatible with asChild mode
+    if (asChild) {
+      return (
+        <Comp
+          className={cn(gradientButtonVariants({ variant, size, className }))}
+          ref={ref}
+          {...props}
+        >
+          {children}
+        </Comp>
+      );
+    }
+
+    // Regular button mode with all features
     return (
       <Comp
         className={cn(gradientButtonVariants({ variant, size, className }))}
@@ -96,7 +111,7 @@ const GradientButton = React.forwardRef<HTMLButtonElement, GradientButtonProps>(
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
           </div>
         )}
-        
+
         <div className={cn(
           "flex items-center gap-2",
           loading && "opacity-0"

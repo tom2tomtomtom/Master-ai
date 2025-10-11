@@ -1,5 +1,6 @@
 'use client';
 
+import { SessionProvider } from 'next-auth/react';
 import { SafeAuthProvider } from '@/components/providers/safe-auth-provider';
 
 interface ProvidersProps {
@@ -8,8 +9,10 @@ interface ProvidersProps {
 
 export function Providers({ children }: ProvidersProps) {
   return (
-    <SafeAuthProvider>
-      {children}
-    </SafeAuthProvider>
+    <SessionProvider>
+      <SafeAuthProvider>
+        {children}
+      </SafeAuthProvider>
+    </SessionProvider>
   );
 }
