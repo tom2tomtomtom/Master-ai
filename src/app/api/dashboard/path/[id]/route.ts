@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase-auth-middleware';
+import { appLogger } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
 
 // Mark this route as dynamic to prevent static generation
@@ -117,7 +118,7 @@ export async function GET(
 
     return NextResponse.json(pathWithProgress);
   } catch (error) {
-    console.error('Error fetching learning path:', error);
+    appLogger.error('Error fetching learning path', { error });
     return NextResponse.json(
       { error: 'Failed to fetch learning path' },
       { status: 500 }

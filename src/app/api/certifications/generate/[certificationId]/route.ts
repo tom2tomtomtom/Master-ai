@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase-auth-middleware';
 import { certificateGenerator } from '@/lib/certificate-generator';
+import { appLogger } from '@/lib/logger';
 import { PrismaClient } from '@prisma/client';
 
 // Mark this route as dynamic to prevent static generation
@@ -74,7 +75,7 @@ export async function POST(
       verificationCode: userCertification.verificationCode,
     });
   } catch (error) {
-    console.error('Error generating certificate:', error);
+    appLogger.error('Error generating certificate', { error });
     return NextResponse.json(
       { error: 'Failed to generate certificate' },
       { status: 500 }

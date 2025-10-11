@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { appLogger } from '@/lib/logger';
 import { PrismaClient } from '@prisma/client';
 
 // Mark this route as dynamic to prevent static generation
@@ -129,7 +130,7 @@ export async function GET(
       currentPosition: currentIndex + 1,
     });
   } catch (error) {
-    console.error('Error fetching lesson navigation:', error);
+    appLogger.error('Error fetching lesson navigation', { error });
     return NextResponse.json(
       { error: 'Failed to fetch lesson navigation' },
       { status: 500 }

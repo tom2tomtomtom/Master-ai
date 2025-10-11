@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/supabase-auth-middleware';
+import { appLogger } from '@/lib/logger';
 import { PrismaClient } from '@prisma/client';
 
 // Mark this route as dynamic to prevent static generation
@@ -56,7 +57,7 @@ export async function PUT(
 
     return NextResponse.json(note);
   } catch (error) {
-    console.error('Error updating lesson note:', error);
+    appLogger.error('Error updating lesson note', { error });
     return NextResponse.json(
       { error: 'Failed to update lesson note' },
       { status: 500 }
@@ -98,7 +99,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Note deleted successfully' });
   } catch (error) {
-    console.error('Error deleting lesson note:', error);
+    appLogger.error('Error deleting lesson note', { error });
     return NextResponse.json(
       { error: 'Failed to delete lesson note' },
       { status: 500 }

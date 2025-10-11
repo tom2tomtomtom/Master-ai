@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUserResourceAccess, handleAuthError } from '@/lib/supabase-auth-middleware';
+import { appLogger } from '@/lib/logger';
 import { PrismaClient } from '@prisma/client';
 
 // Mark this route as dynamic to prevent static generation
@@ -68,8 +69,8 @@ export async function GET(
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Error fetching user certifications:', error);
-    
+    appLogger.error('Error fetching user certifications', { error });
+
     // Handle authorization errors with proper responses
     const authResponse = handleAuthError(error);
     if (authResponse) {
