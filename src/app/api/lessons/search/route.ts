@@ -53,18 +53,18 @@ export async function GET(request: NextRequest) {
       sortBy,
       includeMetadata
     } = searchQuerySchema.parse({
-      page: searchParams.get('page'),
-      limit: searchParams.get('limit'),
-      search: searchParams.get('search'),
-      difficulty: searchParams.get('difficulty'),
-      tools: searchParams.get('tools'),
-      categories: searchParams.get('categories'),
-      minDuration: searchParams.get('minDuration'),
-      maxDuration: searchParams.get('maxDuration'),
-      completed: searchParams.get('completed'),
-      bookmarked: searchParams.get('bookmarked'),
-      sortBy: searchParams.get('sortBy'),
-      includeMetadata: searchParams.get('includeMetadata'),
+      page: searchParams.get('page') || '1',
+      limit: searchParams.get('limit') || '20',
+      search: searchParams.get('search') || undefined,
+      difficulty: searchParams.get('difficulty') || undefined,
+      tools: searchParams.get('tools') || undefined,
+      categories: searchParams.get('categories') || undefined,
+      minDuration: searchParams.get('minDuration') || undefined,
+      maxDuration: searchParams.get('maxDuration') || undefined,
+      completed: searchParams.get('completed') || undefined,
+      bookmarked: searchParams.get('bookmarked') || undefined,
+      sortBy: searchParams.get('sortBy') || 'relevance',
+      includeMetadata: searchParams.get('includeMetadata') || 'true',
     });
 
     const skip = (page - 1) * limit;
