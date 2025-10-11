@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import { achievementSystem } from '@/lib/achievement-system';
 import { certificationEngine } from '@/lib/certification-engine';
 import { appLogger } from '@/lib/logger';
+import { invalidateLessonCompletionCache, invalidateUserCompletionCache } from '@/lib/analytics/completion-rate';
 import { 
   UserProgressWithLesson, 
   UpdateProgressRequest, 
@@ -162,10 +163,14 @@ export async function PUT(
       },
     });
 
+    // Invalidate completion rate caches
+    await invalidateLessonCompletionCache(resolvedParams.id);
+    await invalidateUserCompletionCache(userId);
+
     // Trigger achievement and certification checks if lesson was completed
     let newAchievements: string[] = [];
     let newCertifications: string[] = [];
-    
+
     if (updateData.status === 'completed' || (updateData.progressPercentage >= 100)) {
       try {
         // Process achievement activity for lesson completion

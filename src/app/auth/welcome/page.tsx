@@ -116,7 +116,7 @@ export default function WelcomePage() {
     }
   };
 
-  const subscriptionTier = 'free'; // TODO: Get from user data
+  const subscriptionTier = user?.subscriptionTier || 'free';
   const isFreeTier = subscriptionTier === 'free';
 
   return (

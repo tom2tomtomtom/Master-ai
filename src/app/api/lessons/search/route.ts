@@ -5,6 +5,7 @@ import { getOptionalAuth } from '@/lib/auth-helpers';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import type { SearchResponse, LessonWithMetadata } from '@/types/discovery';
+import { calculateBulkCompletionRates } from '@/lib/analytics/completion-rate';
 
 export const dynamic = 'force-dynamic';
 
@@ -203,11 +204,15 @@ export async function GET(request: NextRequest) {
       prisma.lesson.count({ where: whereClause })
     ]);
 
+    // Calculate completion rates for all lessons
+    const lessonIds = lessons.map(l => l.id);
+    const completionRates = await calculateBulkCompletionRates(prisma, lessonIds);
+
     // Transform lessons data
     const transformedLessons: LessonWithMetadata[] = lessons.map(lesson => {
       const userProgress = lesson.progress?.[0];
       const isBookmarked = lesson.bookmarks && lesson.bookmarks.length > 0;
-      
+
       return {
         id: lesson.id,
         lessonNumber: lesson.lessonNumber,
@@ -232,8 +237,8 @@ export async function GET(request: NextRequest) {
         } : undefined,
         isBookmarked: isBookmarked || false,
         popularity: lesson._count.interactions,
-        completionRate: 75, // TODO: Calculate actual completion rate
-        previewContent: lesson.description ? 
+        completionRate: completionRates.get(lesson.id) || 0,
+        previewContent: lesson.description ?
           lesson.description.substring(0, 200) + (lesson.description.length > 200 ? '...' : '') : '',
       };
     });

@@ -4,6 +4,7 @@ import { appLogger } from '@/lib/logger';
 import { requireAuth, AuthError } from '@/lib/auth-helpers';
 import { Prisma } from '@prisma/client';
 import type { RecommendationSection, LessonWithMetadata } from '@/types/discovery';
+import { calculateBulkCompletionRates } from '@/lib/analytics/completion-rate';
 
 export const dynamic = 'force-dynamic';
 
@@ -128,7 +129,30 @@ export async function GET(request: NextRequest) {
       getToolSpecificRecommendations(userId, userLearningData, limit),
     ]);
 
-    const response: RecommendationSection[] = recommendations.filter(section => 
+    // Collect all unique lesson IDs from all sections
+    const allLessonIds = new Set<string>();
+    recommendations.forEach(section => {
+      section.lessons.forEach(lesson => {
+        allLessonIds.add(lesson.id);
+      });
+    });
+
+    // Calculate completion rates for all lessons in bulk
+    const completionRates = await calculateBulkCompletionRates(
+      prisma,
+      Array.from(allLessonIds)
+    );
+
+    // Add completion rates to all lessons in all sections
+    const sectionsWithRates = recommendations.map(section => ({
+      ...section,
+      lessons: section.lessons.map(lesson => ({
+        ...lesson,
+        completionRate: completionRates.get(lesson.id) || 0,
+      })),
+    }));
+
+    const response: RecommendationSection[] = sectionsWithRates.filter(section =>
       section.lessons.length > 0
     );
 
@@ -295,7 +319,7 @@ async function getContinueLearning(userId: string, limit: number): Promise<Recom
   return {
     title: 'Continue Learning',
     type: 'continue_learning',
-    lessons: transformLessonsToMetadata(inProgressLessons),
+    lessons: transformLessonsToMetadata(inProgressLessons, new Map()),
   };
 }
 
@@ -374,7 +398,7 @@ async function getRecommendedLessons(
   return {
     title: 'Recommended for You',
     type: 'recommended',
-    lessons: transformLessonsToMetadata(recommendations),
+    lessons: transformLessonsToMetadata(recommendations, new Map()),
   };
 }
 
@@ -426,7 +450,7 @@ async function getTrendingLessons(limit: number): Promise<RecommendationSection>
   return {
     title: 'Trending Now',
     type: 'trending',
-    lessons: transformLessonsToMetadata(trendingLessons),
+    lessons: transformLessonsToMetadata(trendingLessons, new Map()),
   };
 }
 
@@ -464,7 +488,7 @@ async function getQuickWins(limit: number): Promise<RecommendationSection> {
   return {
     title: 'Quick Wins',
     type: 'quick_wins',
-    lessons: transformLessonsToMetadata(quickLessons),
+    lessons: transformLessonsToMetadata(quickLessons, new Map()),
   };
 }
 
@@ -530,11 +554,14 @@ async function getToolSpecificRecommendations(
   return {
     title: `Master ${topTool}`,
     type: 'tool_specific',
-    lessons: transformLessonsToMetadata(toolLessons),
+    lessons: transformLessonsToMetadata(toolLessons, new Map()),
   };
 }
 
-function transformLessonsToMetadata(lessons: LessonWithIncludes[]): LessonWithMetadata[] {
+function transformLessonsToMetadata(
+  lessons: LessonWithIncludes[],
+  completionRates: Map<string, number>
+): LessonWithMetadata[] {
   return lessons.map(lesson => {
     // Type guard to check if lesson has progress and bookmarks
     const hasProgressAndBookmarks = 'progress' in lesson && 'bookmarks' in lesson;
@@ -563,7 +590,7 @@ function transformLessonsToMetadata(lessons: LessonWithIncludes[]): LessonWithMe
       } : undefined,
       isBookmarked: hasProgressAndBookmarks && lesson.bookmarks ? lesson.bookmarks.length > 0 : false,
       popularity: lesson._count?.interactions || 0,
-      completionRate: 75, // TODO: Calculate actual completion rate
+      completionRate: completionRates.get(lesson.id) || 0,
       previewContent: lesson.description ?
         lesson.description.substring(0, 200) + (lesson.description.length > 200 ? '...' : '') : '',
     };

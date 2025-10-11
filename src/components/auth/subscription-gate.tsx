@@ -75,12 +75,16 @@ export function SubscriptionGate({
     return null;
   }
 
-  const userTier = 'free'; // TODO: Get from user subscription data
+  const userTier = user.subscriptionTier || 'free';
+  const userStatus = user.subscriptionStatus || 'active';
   const userTierLevel = tierHierarchy[userTier as keyof typeof tierHierarchy];
   const requiredTierLevel = tierHierarchy[requiredTier];
 
+  // Check if subscription is active
+  const hasActiveSubscription = ['active', 'trialing'].includes(userStatus);
+
   // Check if user has sufficient tier access
-  const hasAccess = userTierLevel >= requiredTierLevel;
+  const hasAccess = hasActiveSubscription && userTierLevel >= requiredTierLevel;
 
   if (hasAccess) {
     return <>{children}</>;
@@ -186,12 +190,16 @@ export function SubscriptionGate({
 // Helper hook for checking subscription access
 export function useSubscriptionAccess(requiredTier: keyof typeof tierHierarchy) {
   const { user } = useAuth();
-  
+
   if (!user) return false;
-  
-  const userTier = 'free'; // TODO: Get from user subscription data
+
+  const userTier = user.subscriptionTier || 'free';
+  const userStatus = user.subscriptionStatus || 'active';
   const userTierLevel = tierHierarchy[userTier as keyof typeof tierHierarchy];
   const requiredTierLevel = tierHierarchy[requiredTier];
-  
-  return userTierLevel >= requiredTierLevel;
+
+  // Check if subscription is active
+  const hasActiveSubscription = ['active', 'trialing'].includes(userStatus);
+
+  return hasActiveSubscription && userTierLevel >= requiredTierLevel;
 }
