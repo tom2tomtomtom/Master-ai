@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
+import { requireAuth, AuthError } from '@/lib/auth-helpers';
 import { PrismaClient } from '@prisma/client';
 import { achievementSystem } from '@/lib/achievement-system';
+import { appLogger } from '@/lib/logger';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
@@ -14,19 +15,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getAuthenticatedUser();
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
+    const userId = user.userId;
 
     const resolvedParams = await params;
     const notes = await prisma.lessonNote.findMany({
       where: {
-        userId: user.id,
+        userId: userId,
         lessonId: resolvedParams.id,
       },
       orderBy: {
@@ -36,7 +31,14 @@ export async function GET(
 
     return NextResponse.json(notes);
   } catch (error) {
-    console.error('Error fetching lesson notes:', error);
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
+    appLogger.error('Error fetching lesson notes', { error });
     return NextResponse.json(
       { error: 'Failed to fetch lesson notes' },
       { status: 500 }
@@ -50,14 +52,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getAuthenticatedUser();
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
+    const userId = user.userId;
 
     const body = await request.json();
     const { content, timestamp } = body;
@@ -72,7 +68,7 @@ export async function POST(
     const resolvedParams = await params;
     const note = await prisma.lessonNote.create({
       data: {
-        userId: user.id,
+        userId: userId,
         lessonId: resolvedParams.id,
         content: content.trim(),
         timestamp: timestamp || null,
@@ -83,14 +79,14 @@ export async function POST(
     let newAchievements: string[] = [];
     try {
       newAchievements = await achievementSystem.processUserActivity(
-        user.id,
+        userId,
         {
           noteCreated: true,
           date: new Date(),
         }
       );
     } catch (error) {
-      console.error('Error processing note achievement:', error);
+      appLogger.error('Error processing note achievement', { error });
     }
 
     return NextResponse.json({
@@ -98,7 +94,14 @@ export async function POST(
       newAchievements,
     });
   } catch (error) {
-    console.error('Error creating lesson note:', error);
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
+    appLogger.error('Error creating lesson note', { error });
     return NextResponse.json(
       { error: 'Failed to create lesson note' },
       { status: 500 }
