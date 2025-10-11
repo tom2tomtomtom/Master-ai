@@ -46,8 +46,6 @@ export function useInteractionTracking() {
         lessonId: data.lessonId,
         userId: session.user.id,
       });
-      
-      console.warn('Failed to track interaction:', error);
     }
   }, [session]);
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/providers/auth-provider'
+import { appLogger } from '@/lib/logger'
 
 interface UserProfile {
   id: string
@@ -54,7 +55,7 @@ export function useProfileData() {
         setError(errorData.error || 'Failed to load profile')
       }
     } catch (error) {
-      console.error('Profile fetch error:', error)
+      appLogger.error('Profile fetch error', { error, component: 'useProfileData' })
       setError('Failed to load profile')
     } finally {
       setIsLoading(false)
@@ -89,7 +90,7 @@ export function useProfileData() {
         return false
       }
     } catch (error) {
-      console.error('Profile update error:', error)
+      appLogger.error('Profile update error', { error, component: 'useProfileData' })
       setError('Failed to update profile')
       return false
     } finally {

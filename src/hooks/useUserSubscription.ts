@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/providers/safe-auth-provider';
+import { appLogger } from '@/lib/logger';
 
 interface UserSubscriptionData {
   subscriptionTier: 'free' | 'pro' | 'team' | 'enterprise';
@@ -58,7 +59,7 @@ export function useUserSubscription(): UserSubscriptionData {
           error: null,
         });
       } catch (error) {
-        console.error('Error fetching user subscription:', error);
+        appLogger.error('Error fetching user subscription', { error, component: 'useUserSubscription' });
         setSubscriptionData(prev => ({
           ...prev,
           loading: false,

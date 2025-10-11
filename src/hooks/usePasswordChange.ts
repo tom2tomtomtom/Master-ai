@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { appLogger } from '@/lib/logger'
 
 interface PasswordFormData {
   currentPassword: string
@@ -90,7 +91,7 @@ export function usePasswordChange() {
         return false
       }
     } catch (error) {
-      console.error('Password change error:', error)
+      appLogger.error('Password change error', { error, component: 'usePasswordChange' })
       setError('Failed to change password')
       return false
     } finally {
