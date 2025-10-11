@@ -3,13 +3,32 @@ import { notFound } from 'next/navigation';
 import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { LessonViewer } from '@/components/lesson/lesson-viewer';
+import { Prisma } from '@prisma/client';
 
 interface PageProps {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ pathId?: string }>;
 }
 
-async function getLesson(id: string): Promise<any> {
+type LessonWithPaths = Prisma.LessonGetPayload<{
+  include: {
+    learningPaths: {
+      include: {
+        learningPath: {
+          select: {
+            id: true;
+            name: true;
+            description: true;
+            color: true;
+            icon: true;
+          };
+        };
+      };
+    };
+  };
+}>;
+
+async function getLesson(id: string): Promise<LessonWithPaths | null> {
   try {
     const lesson = await prisma.lesson.findUnique({
       where: { id },
@@ -41,7 +60,7 @@ async function getLesson(id: string): Promise<any> {
   }
 }
 
-async function checkAccess(userId: string, lesson: any): Promise<boolean> {
+async function checkAccess(userId: string, lesson: LessonWithPaths): Promise<boolean> {
   // Check if user has access to this lesson
   // For now, we'll allow access to all published lessons
   // In a real app, you might check subscription tiers, etc.
