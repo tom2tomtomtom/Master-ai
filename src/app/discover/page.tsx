@@ -72,11 +72,9 @@ export default function DiscoverPage() {
       const data: SearchResponse = await response.json();
       setSearchResults(data);
     } catch (error) {
-      appLogger.errors.clientError('lesson-discovery', error as Error, {
-        context: 'fetch_search_results',
-        searchParams: params,
-      });
-      appLogger.error('Failed to fetch search results', { error, component: 'DiscoverPage' });
+      console.error('Failed to fetch search results:', error);
+      // Set empty results on error for graceful UI handling
+      setSearchResults({ lessons: [], total: 0, page: 1, totalPages: 0 });
     } finally {
       setIsLoading(false);
     }
@@ -95,11 +93,9 @@ export default function DiscoverPage() {
       const data: RecommendationSection[] = await response.json();
       setRecommendations(data);
     } catch (error) {
-      appLogger.errors.clientError('lesson-discovery', error as Error, {
-        context: 'fetch_recommendations',
-        userId: session.user.id,
-      });
-      appLogger.error('Failed to fetch recommendations', { error, component: 'DiscoverPage' });
+      console.error('Failed to fetch recommendations:', error);
+      // Set empty recommendations on error for graceful UI handling
+      setRecommendations([]);
     }
   }, [session?.user?.id]);
 

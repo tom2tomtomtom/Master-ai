@@ -112,15 +112,15 @@ export const validateEnv = () => {
     const env = envSchema.parse(process.env);
     return { success: true, data: env };
   } catch (error) {
-    if (error instanceof z.ZodError) {
+    if (error instanceof z.ZodError && error.errors) {
       const missingVars = error.errors
         .filter(err => err.code === 'invalid_type' && err.received === 'undefined')
         .map(err => err.path.join('.'));
-      
+
       const invalidVars = error.errors
         .filter(err => !(err.code === 'invalid_type' && err.received === 'undefined'))
         .map(err => `${err.path.join('.')}: ${err.message}`);
-      
+
       return {
         success: false,
         error: {
@@ -130,7 +130,15 @@ export const validateEnv = () => {
         },
       };
     }
-    throw error;
+    // Return a safe error response for non-ZodError or malformed errors
+    return {
+      success: false,
+      error: {
+        missing: [],
+        invalid: [`Unknown validation error: ${error instanceof Error ? error.message : String(error)}`],
+        details: [],
+      },
+    };
   }
 };
 
