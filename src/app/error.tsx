@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertTriangle, RefreshCcw, Home, Bug } from 'lucide-react'
 import Link from 'next/link'
+import { appLogger } from '@/lib/logger'
 
 interface ErrorPageProps {
   error: Error & { digest?: string }
@@ -15,15 +16,12 @@ export default function ErrorPage({ error, reset }: ErrorPageProps): JSX.Element
   const errorId = `app_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
   useEffect(() => {
-    // Log the error to console for client-side debugging
-    console.error('App error:', {
+    // Log the error with structured logging
+    appLogger.errors.clientError('app-error-boundary', error, {
       errorId,
-      error: error.message,
       digest: error.digest,
-      timestamp: new Date().toISOString(),
       userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : undefined,
       url: typeof window !== 'undefined' ? window.location.href : undefined,
-      stack: error.stack,
     })
   }, [error, errorId])
 
