@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { appLogger } from '@/lib/logger';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { requireAuth, AuthError } from '@/lib/auth-helpers';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -21,10 +20,8 @@ const interactionSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+    // Use new auth helper - automatically throws AuthError if not authenticated
+    const user = await requireAuth();
 
     const body = await request.json();
     const { lessonId, interactionType, metadata } = interactionSchema.parse(body);
@@ -32,7 +29,7 @@ export async function POST(request: NextRequest) {
     // Create the interaction record
     const interaction = await prisma.lessonInteraction.create({
       data: {
-        userId: session.user.id,
+        userId: user.userId,
         lessonId,
         interactionType,
         metadata: metadata || {},
@@ -42,28 +39,36 @@ export async function POST(request: NextRequest) {
 
     // Update user progress if this is a meaningful interaction
     if (interactionType === 'start' || interactionType === 'complete') {
-      await updateUserProgress(session.user.id, lessonId, interactionType, metadata?.duration);
+      await updateUserProgress(user.userId, lessonId, interactionType, metadata?.duration);
     }
 
     // Handle bookmarking
     if (interactionType === 'bookmark') {
-      await handleBookmarkInteraction(session.user.id, lessonId);
+      await handleBookmarkInteraction(user.userId, lessonId);
     }
 
     return NextResponse.json({ success: true, interactionId: interaction.id });
 
   } catch (error) {
+    // Handle authentication errors
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
     appLogger.errors.apiError('lesson-interaction', error as Error, {
       context: 'track_interaction',
     });
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Invalid interaction data', details: error.issues },
         { status: 400 }
       );
     }
-    
+
     return NextResponse.json(
       { error: 'Failed to track interaction' },
       { status: 500 }

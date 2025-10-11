@@ -46,3 +46,13 @@ next-env.d.ts
 /logs
 *.log
 *.log.gz
+
+# Debug Scripts & Screenshots
+debug-*.js
+debug-*.html
+test-*.js
+*-chrome.png
+*-safari.png
+greyed-out-*.png
+signup-*.png
+signin-*.png
