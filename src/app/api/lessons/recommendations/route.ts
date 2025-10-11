@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { appLogger } from '@/lib/logger';
 import { requireAuth, AuthError } from '@/lib/auth-helpers';
+import { Prisma } from '@prisma/client';
 import type { RecommendationSection, LessonWithMetadata } from '@/types/discovery';
 
 export const dynamic = 'force-dynamic';
@@ -185,9 +186,7 @@ async function getContinueLearning(userId: string, limit: number): Promise<Recom
       }
     },
     orderBy: {
-      progress: {
-        lastAccessed: 'desc'
-      }
+      updatedAt: 'desc'
     },
     take: limit,
   });
@@ -200,12 +199,12 @@ async function getContinueLearning(userId: string, limit: number): Promise<Recom
 }
 
 async function getRecommendedLessons(
-  userId: string, 
-  userData: any, 
+  userId: string,
+  userData: any,
   limit: number
 ): Promise<RecommendationSection> {
   // Build recommendation based on user preferences
-  const whereClause: any = {
+  const whereClause: Prisma.LessonWhereInput = {
     isPublished: true,
     // Exclude already completed lessons
     progress: {

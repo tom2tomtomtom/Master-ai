@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { appLogger } from '@/lib/logger';
 import { getOptionalAuth } from '@/lib/auth-helpers';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import type { SearchResponse, LessonWithMetadata } from '@/types/discovery';
 
 export const dynamic = 'force-dynamic';
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build complex where clause
-    const whereClause: any = {
+    const whereClause: Prisma.LessonWhereInput = {
       isPublished: true,
     };
 
@@ -135,7 +136,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build order clause
-    let orderBy: any = {};
+    let orderBy: Prisma.LessonOrderByWithRelationInput | Prisma.LessonOrderByWithRelationInput[] = {};
     switch (sortBy) {
       case 'title':
         orderBy = { title: 'asc' };
@@ -238,7 +239,12 @@ export async function GET(request: NextRequest) {
     });
 
     // Fetch metadata for filters (if requested)
-    let filterMetadata = {};
+    let filterMetadata: SearchResponse['filters'] = {
+      availableDifficulties: [],
+      availableTools: [],
+      availableCategories: [],
+      durationRange: { min: 0, max: 120 },
+    };
     if (includeMetadata === 'true') {
       const [difficulties, toolsList, categoriesList, durationStats] = await Promise.all([
         // Get available difficulties
@@ -284,7 +290,7 @@ export async function GET(request: NextRequest) {
       filterMetadata = {
         availableDifficulties: difficulties
           .map(d => d.difficultyLevel)
-          .filter(Boolean)
+          .filter((level): level is string => Boolean(level))
           .sort(),
         availableTools: uniqueTools,
         availableCategories: categoriesList,

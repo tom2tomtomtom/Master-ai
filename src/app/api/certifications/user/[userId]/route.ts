@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUserResourceAccess, handleAuthError } from '@/lib/supabase-auth-middleware';
 import { appLogger } from '@/lib/logger';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
@@ -24,7 +24,7 @@ export async function GET(
     const category = searchParams.get('category');
     const includeRevoked = searchParams.get('includeRevoked') === 'true';
 
-    const whereClause: any = { userId: targetUserId };
+    const whereClause: Prisma.UserCertificationWhereInput = { userId: targetUserId };
     if (!includeRevoked) {
       whereClause.isRevoked = false;
     }

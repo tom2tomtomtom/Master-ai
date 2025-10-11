@@ -4,6 +4,7 @@ import { stripe, getPriceId, BillingInterval } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { appLogger } from '@/lib/logger'
 import { z } from 'zod'
+import Stripe from 'stripe'
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
@@ -99,7 +100,7 @@ export async function POST(req: NextRequest) {
     const defaultSuccessUrl = `${baseUrl}/dashboard?subscription=success`
     const defaultCancelUrl = `${baseUrl}/dashboard?subscription=cancelled`
 
-    const sessionParams: any = {
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       payment_method_types: ['card'],
       line_items: [
@@ -139,7 +140,7 @@ export async function POST(req: NextRequest) {
         where: { userId: dbUser.id },
       })
 
-      if (!hasHadSubscription) {
+      if (!hasHadSubscription && sessionParams.subscription_data) {
         sessionParams.subscription_data.trial_period_days = 7
         sessionParams.subscription_data.trial_settings = {
           end_behavior: {
@@ -150,7 +151,7 @@ export async function POST(req: NextRequest) {
     }
 
     // For team subscriptions, enable quantity adjustment
-    if (tier === 'team') {
+    if (tier === 'team' && sessionParams.line_items?.[0]) {
       sessionParams.line_items[0].adjustable_quantity = {
         enabled: true,
         minimum: 1,

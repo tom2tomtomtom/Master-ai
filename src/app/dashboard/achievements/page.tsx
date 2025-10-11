@@ -19,7 +19,7 @@ import {
 import { monitoring } from '@/lib/monitoring';
 import { appLogger } from '@/lib/logger';
 
-interface Achievement {
+interface PageAchievement {
   achievementId: string;
   name: string;
   description: string;
@@ -38,7 +38,7 @@ interface Achievement {
   };
 }
 
-interface Certificate {
+interface PageCertificate {
   id: string;
   name: string;
   description?: string;
@@ -88,13 +88,13 @@ interface Stats {
 
 export default function AchievementsPage() {
   const [activeTab, setActiveTab] = useState('overview');
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [achievements, setAchievements] = useState<PageAchievement[]>([]);
+  const [certificates, setCertificates] = useState<PageCertificate[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notification, setNotification] = useState<{
-    achievements?: any[];
-    certificates?: any[];
+    achievements?: PageAchievement[];
+    certificates?: PageCertificate[];
   } | null>(null);
 
   useEffect(() => {
@@ -169,7 +169,7 @@ export default function AchievementsPage() {
     window.open(certificateUrl, '_blank');
   };
 
-  const handleShareCertificate = (certificate: Certificate) => {
+  const handleShareCertificate = (certificate: PageCertificate) => {
     if (navigator.share) {
       navigator.share({
         title: `${certificate.name} Certificate`,
@@ -446,8 +446,8 @@ export default function AchievementsPage() {
         {/* Achievement Notification */}
         {notification && (
           <AchievementNotification
-            achievements={notification.achievements}
-            certificates={notification.certificates}
+            achievements={notification.achievements as any}
+            certificates={notification.certificates as any}
             onDismiss={() => setNotification(null)}
             onViewAchievement={(id) => {
               setActiveTab('achievements');
@@ -459,7 +459,7 @@ export default function AchievementsPage() {
             }}
             onShare={(item, type) => {
               if (type === 'certificate') {
-                handleShareCertificate(item as Certificate);
+                handleShareCertificate(item as PageCertificate);
               }
             }}
           />

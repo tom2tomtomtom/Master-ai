@@ -4,6 +4,7 @@ import { appLogger } from '@/lib/logger';
 import { certificationEngine } from '@/lib/certification-engine';
 import { requireAuth, requireAdmin, logAdminAction, handleAuthError } from '@/lib/supabase-auth-middleware';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
     const includeProgress = searchParams.get('includeProgress') === 'true';
 
     // Get available certifications
-    const whereClause: any = { isActive: true };
+    const whereClause: Prisma.CertificationWhereInput = { isActive: true };
     if (category) {
       whereClause.category = category;
     }

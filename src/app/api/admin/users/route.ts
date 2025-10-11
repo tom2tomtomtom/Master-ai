@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, handleAuthError } from '@/lib/supabase-auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { appLogger } from '@/lib/logger';
-import { UserRole } from '@prisma/client';
+import { UserRole, Prisma } from '@prisma/client';
 import { z } from 'zod';
 
 // Force dynamic rendering for admin routes
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const whereClause: any = {};
+    const whereClause: Prisma.UserWhereInput = {};
     if (role) {
       whereClause.role = role;
     }
