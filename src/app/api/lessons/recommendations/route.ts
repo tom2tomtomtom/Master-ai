@@ -1,20 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { appLogger } from '@/lib/logger';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { requireAuth, AuthError } from '@/lib/auth-helpers';
 import type { RecommendationSection, LessonWithMetadata } from '@/types/discovery';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const userId = session?.user?.id;
-
-    if (!userId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+    const user = await requireAuth();
+    const userId = user.userId;
 
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get('limit') || '8'), 20);
@@ -38,10 +33,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(response);
 
   } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
     appLogger.errors.apiError('lesson-recommendations', error as Error, {
       context: 'get_recommendations',
     });
-    
+
     return NextResponse.json(
       { error: 'Failed to get recommendations' },
       { status: 500 }

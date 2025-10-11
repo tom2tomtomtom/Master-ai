@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { appLogger } from '@/lib/logger';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { getOptionalAuth } from '@/lib/auth-helpers';
 import { z } from 'zod';
 import type { SearchResponse, LessonWithMetadata } from '@/types/discovery';
 
@@ -33,9 +32,9 @@ const searchQuerySchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const userId = session?.user?.id;
-    
+    const user = await getOptionalAuth();
+    const userId = user?.userId;
+
     const { searchParams } = new URL(request.url);
     
     const {

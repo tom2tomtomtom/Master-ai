@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '@/lib/supabase-auth-middleware';
+import { requireAuth, AuthError } from '@/lib/auth-helpers';
 import { PrismaClient } from '@prisma/client';
 import { achievementSystem } from '@/lib/achievement-system';
+import { appLogger } from '@/lib/logger';
 
 // Mark this route as dynamic to prevent static generation
 export const dynamic = 'force-dynamic';
@@ -14,20 +15,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getAuthenticatedUser();
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    const user = await requireAuth();
     const resolvedParams = await params;
+
     const bookmark = await prisma.lessonBookmark.findUnique({
       where: {
         userId_lessonId: {
-          userId: user.id,
+          userId: user.userId,
           lessonId: resolvedParams.id,
         },
       },
@@ -43,7 +37,14 @@ export async function GET(
 
     return NextResponse.json(bookmark);
   } catch (error) {
-    console.error('Error fetching lesson bookmark:', error);
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
+    appLogger.error('Error fetching lesson bookmark', { error });
     return NextResponse.json(
       { error: 'Failed to fetch lesson bookmark' },
       { status: 500 }
@@ -57,25 +58,16 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getAuthenticatedUser();
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    const user = await requireAuth();
     const body = await request.json();
     const { title, timestamp } = body;
-
     const resolvedParams = await params;
-    
+
     // Check if this is a new bookmark creation
     const existingBookmark = await prisma.lessonBookmark.findUnique({
       where: {
         userId_lessonId: {
-          userId: user.id,
+          userId: user.userId,
           lessonId: resolvedParams.id,
         },
       },
@@ -86,7 +78,7 @@ export async function POST(
     const bookmark = await prisma.lessonBookmark.upsert({
       where: {
         userId_lessonId: {
-          userId: user.id,
+          userId: user.userId,
           lessonId: resolvedParams.id,
         },
       },
@@ -95,7 +87,7 @@ export async function POST(
         timestamp: timestamp || null,
       },
       create: {
-        userId: user.id,
+        userId: user.userId,
         lessonId: resolvedParams.id,
         title: title || null,
         timestamp: timestamp || null,
@@ -115,14 +107,14 @@ export async function POST(
     if (isNewBookmark) {
       try {
         newAchievements = await achievementSystem.processUserActivity(
-          user.id,
+          user.userId,
           {
             bookmarkCreated: true,
             date: new Date(),
           }
         );
       } catch (error) {
-        console.error('Error processing bookmark achievement:', error);
+        appLogger.error('Error processing bookmark achievement', { error });
       }
     }
 
@@ -131,7 +123,14 @@ export async function POST(
       newAchievements,
     });
   } catch (error) {
-    console.error('Error creating/updating lesson bookmark:', error);
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
+    appLogger.error('Error creating/updating lesson bookmark', { error });
     return NextResponse.json(
       { error: 'Failed to create/update lesson bookmark' },
       { status: 500 }
@@ -145,20 +144,13 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getAuthenticatedUser();
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    const user = await requireAuth();
     const resolvedParams = await params;
+
     const bookmark = await prisma.lessonBookmark.findUnique({
       where: {
         userId_lessonId: {
-          userId: user.id,
+          userId: user.userId,
           lessonId: resolvedParams.id,
         },
       },
@@ -174,7 +166,7 @@ export async function DELETE(
     await prisma.lessonBookmark.delete({
       where: {
         userId_lessonId: {
-          userId: user.id,
+          userId: user.userId,
           lessonId: resolvedParams.id,
         },
       },
@@ -182,7 +174,14 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Bookmark deleted successfully' });
   } catch (error) {
-    console.error('Error deleting lesson bookmark:', error);
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
+    appLogger.error('Error deleting lesson bookmark', { error });
     return NextResponse.json(
       { error: 'Failed to delete lesson bookmark' },
       { status: 500 }
