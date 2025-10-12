@@ -39,7 +39,7 @@ export function DashboardLayout({ children, title, subtitle, headerActions }: Da
 
   return (
     <Sidebar>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <DashboardHeader title={title} subtitle={subtitle}>
           {headerActions}
         </DashboardHeader>

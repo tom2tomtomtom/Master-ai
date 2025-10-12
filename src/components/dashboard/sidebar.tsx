@@ -54,19 +54,19 @@ export function DashboardSidebar() {
           href={item.href}
           className={cn(
             "group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-            isActive ? 
-              "bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30" : 
-              "hover:bg-bg-tertiary border border-transparent hover:border-border"
+            isActive ?
+              "bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30" :
+              "hover:bg-gray-100 border border-transparent hover:border-gray-200"
           )}
           onClick={() => setIsMobileMenuOpen(false)}
         >
           <item.icon className={cn(
             "w-5 h-5 transition-colors",
-            isActive ? "text-purple-400" : "text-text-tertiary group-hover:text-purple-400"
+            isActive ? "text-purple-500" : "text-gray-400 group-hover:text-purple-500"
           )} />
           <span className={cn(
             "font-medium transition-colors",
-            isActive ? "text-text-primary" : "text-text-secondary group-hover:text-text-primary"
+            isActive ? "text-gray-900" : "text-gray-600 group-hover:text-gray-900"
           )}>
             {item.name}
           </span>
@@ -100,13 +100,13 @@ export function DashboardSidebar() {
 
       {/* User Profile */}
       {session?.user && (
-        <div className="mb-6 p-4 bg-bg-tertiary/50 rounded-xl border border-border">
+        <div className="mb-6 p-4 bg-white/50 rounded-xl border border-gray-200">
           <div className="flex items-center gap-3">
             <div className="relative">
               {session.user.image ? (
-                <img 
-                  src={session.user.image} 
-                  alt={session.user.name || 'User'} 
+                <img
+                  src={session.user.image}
+                  alt={session.user.name || 'User'}
                   className="w-10 h-10 rounded-full"
                 />
               ) : (
@@ -116,13 +116,13 @@ export function DashboardSidebar() {
                   </span>
                 </div>
               )}
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-bg-tertiary" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-text-primary truncate">
+              <p className="text-sm font-semibold text-gray-900 truncate">
                 {session.user.name || 'User'}
               </p>
-              <p className="text-xs text-text-tertiary">
+              <p className="text-xs text-gray-500">
                 Pro Member
               </p>
             </div>
@@ -138,21 +138,21 @@ export function DashboardSidebar() {
       </nav>
 
       {/* Bottom Navigation */}
-      <div className="mt-auto pt-6 border-t border-border space-y-1">
+      <div className="mt-auto pt-6 border-t border-gray-200 space-y-1">
         {bottomNav.map((item, index) => (
           <NavItem key={item.name} item={item} index={navigation.length + index} />
         ))}
-        
+
         {/* Logout Button */}
         <motion.button
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3, delay: (navigation.length + bottomNav.length) * 0.05 }}
           onClick={() => signOut()}
-          className="w-full group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-bg-tertiary border border-transparent hover:border-border transition-all duration-200"
+          className="w-full group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 border border-transparent hover:border-gray-200 transition-all duration-200"
         >
-          <LogOut className="w-5 h-5 text-text-tertiary group-hover:text-red-400 transition-colors" />
-          <span className="font-medium text-text-secondary group-hover:text-text-primary transition-colors">
+          <LogOut className="w-5 h-5 text-gray-400 group-hover:text-red-500 transition-colors" />
+          <span className="font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
             Sign Out
           </span>
         </motion.button>
@@ -165,17 +165,17 @@ export function DashboardSidebar() {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-bg-tertiary border border-border rounded-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white border border-gray-200 rounded-lg shadow-sm"
       >
         {isMobileMenuOpen ? (
-          <X className="w-5 h-5 text-text-primary" />
+          <X className="w-5 h-5 text-gray-900" />
         ) : (
-          <Menu className="w-5 h-5 text-text-primary" />
+          <Menu className="w-5 h-5 text-gray-900" />
         )}
       </button>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex fixed left-0 top-0 h-full w-64 bg-bg-secondary/50 backdrop-blur-xl border-r border-border">
+      <aside className="hidden lg:flex fixed left-0 top-0 h-full w-64 bg-white/80 backdrop-blur-xl border-r border-gray-200">
         <div className="flex flex-col w-full p-6">
           <SidebarContent />
         </div>
@@ -186,7 +186,7 @@ export function DashboardSidebar() {
         initial={false}
         animate={{ x: isMobileMenuOpen ? 0 : -280 }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="lg:hidden fixed left-0 top-0 h-full w-72 bg-bg-secondary/95 backdrop-blur-xl border-r border-border z-40"
+        className="lg:hidden fixed left-0 top-0 h-full w-72 bg-white/95 backdrop-blur-xl border-r border-gray-200 z-40"
       >
         <div className="flex flex-col w-full p-6 pt-16">
           <SidebarContent />

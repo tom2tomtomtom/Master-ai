@@ -206,12 +206,11 @@ export default function DashboardPage(): JSX.Element {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-ai-blue-50 to-ai-purple-50">
-      <DashboardLayout 
-        title={`${getGreeting()}, ${user?.user_metadata?.name || user?.email || 'Student'}!`}
-        subtitle={getMotivationalMessage()}
-      >
-        <div className="space-y-8">
+    <DashboardLayout
+      title={`${getGreeting()}, ${user?.user_metadata?.name || user?.email || 'Student'}!`}
+      subtitle={getMotivationalMessage()}
+    >
+      <div className="space-y-8">
         {/* Overview Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard
@@ -437,6 +436,5 @@ export default function DashboardPage(): JSX.Element {
         </div>
         </div>
       </DashboardLayout>
-    </div>
   );
 }
