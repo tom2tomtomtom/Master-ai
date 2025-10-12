@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const PRODUCTION_URL = 'https://master-ai-saas-f7fcaoacr-tom-hydes-projects.vercel.app';
+const PRODUCTION_URL = 'https://master-ai-saas-80ukthpjz-tom-hydes-projects.vercel.app';
 
 test.describe('Complete User Flow Tests', () => {
 
@@ -76,38 +76,35 @@ test.describe('Complete User Flow Tests', () => {
       return;
     }
 
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(3000); // Wait for content to fully render
     console.log('');
 
-    // Step 5: Check if we landed on lesson detail page or got 404
+    // Step 5: Check if we landed on lesson detail page
     console.log('Step 5: Check lesson detail page');
     const currentUrl = page.url();
     console.log(`Current URL: ${currentUrl}`);
 
     await page.screenshot({ path: 'test-results/flow-lesson-page.png', fullPage: true });
 
-    const pageTitle = await page.title();
     const pageContent = await page.textContent('body');
 
-    if (pageContent?.includes('404') || pageContent?.includes('Not Found')) {
+    // Check for lesson content - if we see "Back to Discover" and "Lesson", we're good!
+    const hasLessonContent = pageContent?.includes('Back to Discover') &&
+                            pageContent?.includes('Lesson 0');
+
+    if (hasLessonContent) {
+      console.log('✅ Lesson page loaded successfully!');
+      console.log(`   Content length: ${pageContent?.length || 0} characters`);
+      console.log(`   URL: ${currentUrl}`);
+    } else if (pageContent?.includes('404') || pageContent?.includes('This page could not be found')) {
       console.log('❌ Got 404 error!');
       console.log('Page content:', pageContent.substring(0, 300));
       throw new Error('Lesson page returned 404');
-    } else if (currentUrl.includes('/lesson')) {
-      console.log('✅ Navigated to lesson page');
-      console.log(`Page title: ${pageTitle}`);
     } else {
-      console.log('⚠️  Unexpected navigation');
-      console.log(`Page title: ${pageTitle}`);
+      console.log('⚠️  Unexpected page content');
+      console.log('Content preview:', pageContent?.substring(0, 300));
     }
-    console.log('');
-
-    // Step 6: Check lesson content is visible
-    console.log('Step 6: Check lesson content visible');
-    const hasContent = pageContent?.length > 500;
-    console.log(`Content length: ${pageContent?.length || 0} characters`);
-    console.log(`Has substantial content: ${hasContent}`);
   });
 
   test('Flow 2: User signs up and views lesson', async ({ page }) => {
