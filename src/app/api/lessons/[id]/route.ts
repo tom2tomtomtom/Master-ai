@@ -14,9 +14,9 @@ export async function GET(
 ) {
   try {
     const resolvedParams = await params;
-    
-    // Validate lesson ID
-    const lessonIdSchema = z.string().uuid();
+
+    // Validate lesson ID (CUID format from Prisma)
+    const lessonIdSchema = z.string().cuid();
     const lessonId = lessonIdSchema.parse(resolvedParams.id);
     
     const lesson = await prisma.lesson.findUnique({
@@ -86,9 +86,9 @@ export async function PUT(
     await requireAdmin(); // Only admin can update lessons
     
     const resolvedParams = await params;
-    
+
     // Validate lesson ID and update data
-    const lessonIdSchema = z.string().uuid();
+    const lessonIdSchema = z.string().cuid();
     const updateLessonSchema = z.object({
       title: z.string().min(1).optional(),
       description: z.string().min(1).optional(),
@@ -138,11 +138,11 @@ export async function DELETE(
 ) {
   try {
     await requireAdmin(); // Only admin can delete lessons
-    
+
     const resolvedParams = await params;
-    
-    // Validate lesson ID
-    const lessonIdSchema = z.string().uuid();
+
+    // Validate lesson ID (CUID format from Prisma)
+    const lessonIdSchema = z.string().cuid();
     const lessonId = lessonIdSchema.parse(resolvedParams.id);
     
     await prisma.lesson.delete({
