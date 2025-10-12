@@ -68,4 +68,17 @@ export class ErrorLogger {
       context: sanitizeLogData(context)
     });
   }
+
+  clientError(source: string, error: Error, context?: any) {
+    this.logger.error('Client-side error', {
+      category: 'error',
+      event: 'client_error',
+      source,
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      digest: (error as any).digest,
+      context: sanitizeLogData(context)
+    });
+  }
 }
