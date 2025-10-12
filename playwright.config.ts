@@ -42,7 +42,7 @@ export default defineConfig({
     },
     {
       name: 'standalone',
-      testMatch: /.*standalone.*\.spec\.ts/,
+      testMatch: /.*standalone.*\.spec\.ts|.*production-final.*\.spec\.ts|.*diagnose.*\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
       },
