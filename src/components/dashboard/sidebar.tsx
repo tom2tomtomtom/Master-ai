@@ -36,7 +36,11 @@ const bottomNav = [
   { name: 'Settings', href: '/dashboard/profile', icon: Settings },
 ];
 
-export function DashboardSidebar() {
+interface DashboardSidebarProps {
+  children?: React.ReactNode;
+}
+
+export function DashboardSidebar({ children }: DashboardSidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -203,6 +207,11 @@ export function DashboardSidebar() {
           className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
         />
       )}
+
+      {/* Main Content */}
+      <div className="lg:pl-64 min-h-screen">
+        {children}
+      </div>
     </>
   );
 }

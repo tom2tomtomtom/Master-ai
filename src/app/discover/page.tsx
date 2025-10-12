@@ -77,7 +77,15 @@ export default function DiscoverPage() {
     } catch (error) {
       console.error('Failed to fetch search results:', error);
       // Set empty results on error for graceful UI handling
-      setSearchResults({ lessons: [], total: 0, page: 1, totalPages: 0 });
+      setSearchResults({
+        lessons: [],
+        pagination: { page: 1, limit: 20, total: 0, pages: 0 },
+        filters: {
+          availableDifficulties: [],
+          availableTools: [],
+          availableCategories: []
+        }
+      });
     } finally {
       setIsLoading(false);
     }
