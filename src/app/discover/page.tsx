@@ -383,7 +383,7 @@ export default function DiscoverPage() {
                   <LessonGrid
                     lessons={[]}
                     viewMode={searchParams.viewMode}
-                    isLoading={true}
+                    isLoading={isLoading}
                   />
                 )}
 
