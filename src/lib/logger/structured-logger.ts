@@ -44,6 +44,10 @@ export class StructuredLogger {
     this.baseLogger.warn(message, sanitizeLogData(meta));
   }
 
+  error(message: string, meta?: any) {
+    this.baseLogger.error(message, sanitizeLogData(meta));
+  }
+
   logError(message: string, meta?: any) {
     this.baseLogger.error(message, sanitizeLogData(meta));
   }

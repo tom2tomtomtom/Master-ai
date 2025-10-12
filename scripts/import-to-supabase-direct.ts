@@ -85,7 +85,7 @@ async function importLessonsToSupabase() {
           title: lesson.title,
           description: lesson.description,
           content: lesson.content,
-          htmlContent: lesson.htmlContent,
+          // htmlContent removed - not in Prisma schema
           tools: lesson.tools,
           estimatedTime: lesson.estimatedTime,
           difficultyLevel: lesson.difficultyLevel as any,

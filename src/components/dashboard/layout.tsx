@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/components/providers/safe-auth-provider';
+import { useSupabaseAuth } from '@/components/providers/supabase-auth-provider';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Sidebar } from './sidebar';
@@ -14,7 +14,7 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, title, subtitle, headerActions }: DashboardLayoutProps) {
-  const { user, loading } = useAuth();
+  const { user, loading } = useSupabaseAuth();
   const router = useRouter();
 
   useEffect(() => {

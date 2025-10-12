@@ -25,7 +25,9 @@ class ErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log with structured logging
-    appLogger.errors.clientError('react-error-boundary', error, {
+    appLogger.error('react-error-boundary', {
+      error: error.message,
+      stack: error.stack,
       componentStack: errorInfo.componentStack,
       userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : undefined,
       url: typeof window !== 'undefined' ? window.location.href : undefined

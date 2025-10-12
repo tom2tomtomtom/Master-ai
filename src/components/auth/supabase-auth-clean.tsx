@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase-client'
+import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/safe-auth-provider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -75,21 +75,22 @@ export function SupabaseAuthClean({ mode = 'signin', redirectTo = '/dashboard' }
     }
 
     try {
+      const supabase = createClient()
       let result
-      
+
       if (isSignUp) {
         result = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: typeof window !== 'undefined' 
-              ? `${window.location.origin}${redirectTo}` 
+            emailRedirectTo: typeof window !== 'undefined'
+              ? `${window.location.origin}${redirectTo}`
               : `${redirectTo}`,
           }
         })
-        
+
         if (result.error) throw result.error
-        
+
         if (result.data?.user && !result.data?.session) {
           setMessage('Check your email for the confirmation link to complete your registration.')
         } else {
@@ -101,9 +102,9 @@ export function SupabaseAuthClean({ mode = 'signin', redirectTo = '/dashboard' }
           email,
           password,
         })
-        
+
         if (result.error) throw result.error
-        
+
         // Sign in successful
         router.push(redirectTo)
       }
@@ -121,10 +122,11 @@ export function SupabaseAuthClean({ mode = 'signin', redirectTo = '/dashboard' }
     setError(null)
 
     try {
+      const supabase = createClient()
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: typeof window !== 'undefined' 
+          redirectTo: typeof window !== 'undefined'
             ? `${window.location.origin}/dashboard`
             : '/dashboard',
         },
