@@ -76,12 +76,12 @@ export function StatsCard({
     if (typeof value === 'number' && animated) {
       return <AnimatedCounter end={value} className={cn(
         "text-2xl font-bold",
-        variant === 'glass' || variant === 'gradient' ? "text-white" : "text-gray-900"
+        variant === 'glass' || variant === 'gradient' ? "text-white" : "text-card-foreground"
       )} />;
     }
     return <span className={cn(
       "text-2xl font-bold",
-      variant === 'glass' || variant === 'gradient' ? "text-white" : "text-gray-900"
+      variant === 'glass' || variant === 'gradient' ? "text-white" : "text-card-foreground"
     )}>{value}</span>;
   };
 
@@ -173,7 +173,7 @@ export function StatsCard({
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
+            <p className="text-sm font-medium text-card-foreground/80 mb-1">{title}</p>
             <div className="flex items-baseline">
               {renderValue()}
               {trend && (
@@ -187,7 +187,7 @@ export function StatsCard({
               )}
             </div>
             {subtitle && (
-              <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+              <p className="text-sm text-card-foreground/60 mt-1">{subtitle}</p>
             )}
           </div>
           {Icon && (
