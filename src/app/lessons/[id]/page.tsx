@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Lock, ArrowRight, Clock, BarChart } from 'lucide-react';
+import { MarkdownRenderer } from '@/components/markdown-renderer';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -110,13 +111,13 @@ function LessonPreview({ lesson }: { lesson: LessonWithPaths }) {
           </h1>
 
           {lesson.description && (
-            <p className="text-lg text-gray-600 mb-6">
+            <p className="text-lg text-gray-700 mb-6 leading-relaxed">
               {lesson.description}
             </p>
           )}
 
           {/* Lesson Meta */}
-          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-700">
             {lesson.estimatedTime && (
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
@@ -159,16 +160,29 @@ function LessonPreview({ lesson }: { lesson: LessonWithPaths }) {
         )}
 
         {/* Content Preview */}
-        <div className="prose prose-lg max-w-none mb-8">
+        <div className="mb-8">
           <div className="bg-white rounded-lg border border-gray-200 p-8 relative">
             {lesson.isFree ? (
-              // Show full content for free lessons
-              <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+              // Show full content for free lessons with proper markdown rendering
+              <MarkdownRenderer
+                content={lesson.content}
+                className="prose prose-lg prose-slate max-w-none
+                  prose-headings:text-gray-900 prose-headings:font-bold
+                  prose-p:text-gray-800 prose-p:leading-relaxed
+                  prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+                  prose-strong:text-gray-900 prose-strong:font-semibold
+                  prose-ul:text-gray-800 prose-ol:text-gray-800
+                  prose-li:text-gray-800 prose-li:leading-relaxed
+                  prose-code:text-purple-600 prose-code:bg-purple-50 prose-code:px-1 prose-code:rounded
+                  prose-pre:bg-gray-900 prose-pre:text-gray-100"
+              />
             ) : (
               // Show preview with blur for premium lessons
               <>
                 <div className="relative">
-                  <div className="whitespace-pre-wrap">{preview}</div>
+                  <div className="whitespace-pre-wrap text-gray-800 leading-relaxed text-base">
+                    {preview}
+                  </div>
                   {hasMore && (
                     <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
                   )}
