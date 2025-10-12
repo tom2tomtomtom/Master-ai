@@ -21,7 +21,7 @@ import type {
 
 export default function DiscoverPage() {
   const session = useSession()?.data;
-  
+
   // State management
   const [searchParams, setSearchParams] = useState<SearchParams>({
     filters: {
@@ -41,7 +41,10 @@ export default function DiscoverPage() {
   const [recommendations, setRecommendations] = useState<RecommendationSection[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'search' | 'recommendations'>('recommendations');
+  // Default to 'search' tab for unauthenticated users to show all lessons immediately
+  const [activeTab, setActiveTab] = useState<'search' | 'recommendations'>(
+    session?.user?.id ? 'recommendations' : 'search'
+  );
 
   // Fetch search results
   const fetchSearchResults = useCallback(async (params: SearchParams) => {
@@ -96,6 +99,17 @@ export default function DiscoverPage() {
       console.error('Failed to fetch recommendations:', error);
       // Set empty recommendations on error for graceful UI handling
       setRecommendations([]);
+    }
+  }, [session?.user?.id]);
+
+  // Switch to appropriate tab when session changes
+  useEffect(() => {
+    if (session?.user?.id && activeTab === 'search' && !hasActiveFilters) {
+      // User just logged in, switch to recommendations if no active filters
+      setActiveTab('recommendations');
+    } else if (!session?.user?.id && activeTab === 'recommendations') {
+      // User logged out, switch to search
+      setActiveTab('search');
     }
   }, [session?.user?.id]);
 
