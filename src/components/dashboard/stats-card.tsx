@@ -74,9 +74,15 @@ export function StatsCard({
   
   const renderValue = () => {
     if (typeof value === 'number' && animated) {
-      return <AnimatedCounter end={value} className="text-2xl font-bold text-gray-900" />;
+      return <AnimatedCounter end={value} className={cn(
+        "text-2xl font-bold",
+        variant === 'glass' || variant === 'gradient' ? "text-white" : "text-gray-900"
+      )} />;
     }
-    return <span className="text-2xl font-bold text-gray-900">{value}</span>;
+    return <span className={cn(
+      "text-2xl font-bold",
+      variant === 'glass' || variant === 'gradient' ? "text-white" : "text-gray-900"
+    )}>{value}</span>;
   };
 
   const cardContent = (
@@ -85,7 +91,7 @@ export function StatsCard({
         <div className="flex-1">
           <p className={cn(
             "text-sm font-medium mb-1",
-            variant === 'glass' ? "text-white/70" : "text-gray-600"
+            variant === 'glass' || variant === 'gradient' ? "text-white/90" : "text-gray-600"
           )}>
             {title}
           </p>
@@ -104,7 +110,7 @@ export function StatsCard({
           {subtitle && (
             <p className={cn(
               "text-sm mt-1",
-              variant === 'glass' ? "text-white/60" : "text-gray-500"
+              variant === 'glass' || variant === 'gradient' ? "text-white/80" : "text-gray-500"
             )}>
               {subtitle}
             </p>

@@ -40,6 +40,13 @@ export default defineConfig({
       },
       dependencies: ['setup'],
     },
+    {
+      name: 'standalone',
+      testMatch: /.*standalone.*\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+      },
+    },
   ],
 
   webServer: {
