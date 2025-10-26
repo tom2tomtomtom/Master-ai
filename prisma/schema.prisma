@@ -1,0 +1,539 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+// User Management
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+
+  @@map("user_roles")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  password      String?
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Password Reset
+  resetToken        String?   // Hashed token for security
+  resetTokenExpires DateTime? // Token expiration timestamp
+
+  // Subscription
+  subscriptionTier       String    @default("free") // free, pro, team, enterprise
+  subscriptionStatus     String    @default("active") // active, canceled, past_due, incomplete, trialing
+  stripeCustomerId       String?   @unique
+  stripeSubscriptionId   String?   @unique
+  subscriptionEndsAt     DateTime? // When subscription ends (for cancellations)
+  trialEndsAt            DateTime? // When trial ends
+  billingInterval        String?   // month, year
+
+  // Learning
+  progress       UserProgress[]
+  submissions    UserSubmission[]
+  notes          LessonNote[]
+  bookmarks      LessonBookmark[]
+  certifications UserCertification[]
+  achievements   UserAchievement[]
+  stats          UserStats?
+  interactions   LessonInteraction[]
+
+  // Team Management
+  teamMemberships TeamMember[]
+  ownedTeams      Team[]       @relation("TeamOwner")
+
+  // Stripe Payment Tracking
+  stripeCustomer     StripeCustomer?
+  stripeSubscriptions StripeSubscription[]
+  stripeInvoices     StripeInvoice[]
+
+  // Authentication
+  accounts Account[]
+  sessions Session[]
+
+  @@map("users")
+}
+
+// NextAuth.js required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+// Learning Content
+model LearningPath {
+  id               String @id @default(cuid())
+  name             String
+  description      String?
+  targetAudience   String?
+  estimatedHours   Int?
+  difficultyLevel  String? // beginner, intermediate, advanced, expert
+  color            String? @default("#3B82F6")
+  icon             String?
+  order            Int     @default(0)
+  isActive         Boolean @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  lessons LearningPathLesson[]
+
+  @@map("learning_paths")
+}
+
+model Lesson {
+  id              String   @id @default(cuid())
+  lessonNumber    Int
+  title           String
+  description     String?
+  content         String   @db.Text // Markdown content
+  videoUrl        String?
+  videoDuration   Int?     // in seconds
+  estimatedTime   Int?     // in minutes
+  difficultyLevel String?  // beginner, intermediate, advanced
+  tools           String[] // AI tools covered
+  isPublished     Boolean  @default(false)
+  isFree          Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relationships
+  learningPaths LearningPathLesson[]
+  exercises     Exercise[]
+  progress      UserProgress[]
+  notes         LessonNote[]
+  bookmarks     LessonBookmark[]
+  categories    LessonCategoryMapping[]
+  interactions  LessonInteraction[]
+
+  @@unique([lessonNumber])
+  @@map("lessons")
+}
+
+model LearningPathLesson {
+  id             String @id @default(cuid())
+  learningPathId String
+  lessonId       String
+  order          Int
+  isRequired     Boolean @default(true)
+
+  learningPath LearningPath @relation(fields: [learningPathId], references: [id], onDelete: Cascade)
+  lesson       Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([learningPathId, lessonId])
+  @@map("learning_path_lessons")
+}
+
+// Progress Tracking
+model UserProgress {
+  id                 String    @id @default(cuid())
+  userId             String
+  lessonId           String
+  status             String    @default("not_started") // not_started, in_progress, completed
+  progressPercentage Int       @default(0)
+  timeSpentMinutes   Int       @default(0)
+  lastAccessed       DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@map("user_progress")
+}
+
+model LessonNote {
+  id        String   @id @default(cuid())
+  userId    String
+  lessonId  String
+  content   String   @db.Text
+  timestamp Int?     // Video timestamp in seconds
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@map("lesson_notes")
+}
+
+model LessonBookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  lessonId  String
+  title     String?
+  timestamp Int?     // Video timestamp in seconds
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@map("lesson_bookmarks")
+}
+
+// Exercises and Assessments
+model Exercise {
+  id             String @id @default(cuid())
+  lessonId       String
+  type           String // multiple_choice, practical, project, code
+  title          String
+  description    String?
+  instructions   String @db.Text
+  solutionGuide  String? @db.Text
+  pointsPossible Int    @default(100)
+  order          Int    @default(0)
+  isRequired     Boolean @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  lesson      Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  submissions UserSubmission[]
+
+  @@map("exercises")
+}
+
+model UserSubmission {
+  id             String    @id @default(cuid())
+  userId         String
+  exerciseId     String
+  submissionData Json?     // Flexible JSON for different exercise types
+  score          Int?
+  feedback       String?   @db.Text
+  isGraded       Boolean   @default(false)
+  submittedAt    DateTime  @default(now())
+  gradedAt       DateTime?
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@map("user_submissions")
+}
+
+// Certifications and Achievements
+model Certification {
+  id                String  @id @default(cuid())
+  name              String
+  description       String?
+  type              String  @default("completion") // completion, path, tool_mastery, professional
+  category          String? // learning_path, skill, milestone, professional
+  badgeImageUrl     String?
+  certificateTemplateId String?
+  requirements      Json?   // Flexible requirements structure
+  pointsRequired    Int?
+  lessonsRequired   String[] // Lesson IDs
+  pathsRequired     String[] // Learning Path IDs
+  prerequisiteCerts String[] // Required certification IDs
+  validityPeriod    Int?    // Validity in months (null = permanent)
+  isActive          Boolean @default(true)
+  displayOrder      Int     @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  userCertifications UserCertification[]
+
+  @@map("certifications")
+}
+
+model UserCertification {
+  id               String    @id @default(cuid())
+  userId           String
+  certificationId  String
+  earnedAt         DateTime  @default(now())
+  expiresAt        DateTime?
+  certificateUrl   String?
+  verificationCode String    @unique @default(cuid())
+  verificationHash String?   // For tamper detection
+  metadata         Json?     // Additional cert data (completion stats, etc.)
+  isRevoked        Boolean   @default(false)
+  revokedAt        DateTime?
+  revokedReason    String?
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  certification Certification @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, certificationId])
+  @@map("user_certifications")
+}
+
+model Achievement {
+  id               String   @id @default(cuid())
+  name             String
+  description      String
+  category         String   // milestone, streak, engagement, speed, special
+  type             String   // lessons_completed, streak_days, notes_taken, etc.
+  badgeImageUrl    String?
+  icon             String?  // Icon name/class for UI
+  color            String?  // Badge color
+  criteria         Json     // Achievement criteria (flexible structure)
+  pointsAwarded    Int      @default(0)
+  isActive         Boolean  @default(true)
+  displayOrder     Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  earnedAt      DateTime @default(now())
+  metadata      Json?    // Progress data when earned
+  isVisible     Boolean  @default(true)
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+model UserStats {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  totalLessonsCompleted Int      @default(0)
+  totalTimeSpentMinutes Int      @default(0)
+  currentStreak         Int      @default(0)
+  longestStreak         Int      @default(0)
+  lastActivityDate      DateTime?
+  totalNotesCreated     Int      @default(0)
+  totalBookmarksCreated Int      @default(0)
+  averageScorePercent   Float?
+  totalPointsEarned     Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_stats")
+}
+
+model CertificateTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  templateUrl String   // Path to PDF template
+  variables   Json?    // Template variables definition
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("certificate_templates")
+}
+
+// Team Management
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  ownerId     String
+  maxMembers  Int      @default(10)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner   User         @relation("TeamOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members TeamMember[]
+
+  @@map("teams")
+}
+
+// Lesson Discovery System
+model LessonCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  color       String   @default("#3B82F6") // Hex color for UI
+  icon        String?  // Lucide icon name
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lessons LessonCategoryMapping[]
+
+  @@map("lesson_categories")
+}
+
+model LessonCategoryMapping {
+  id         String @id @default(cuid())
+  lessonId   String
+  categoryId String
+
+  lesson   Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  category LessonCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, categoryId])
+  @@map("lesson_category_mappings")
+}
+
+model LessonInteraction {
+  id              String   @id @default(cuid())
+  userId          String
+  lessonId        String
+  interactionType String   // 'view', 'start', 'complete', 'bookmark', 'search', 'preview', 'filter'
+  metadata        Json?    // Additional data like search query, filter values, etc.
+  sessionId       String?  // For grouping interactions in a session
+  createdAt       DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@map("lesson_interactions")
+}
+
+model TeamMember {
+  id       String @id @default(cuid())
+  teamId   String
+  userId   String
+  role     String @default("member") // owner, admin, member
+  joinedAt DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@map("team_members")
+}
+
+// Stripe Payment Tracking
+model StripeCustomer {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  stripeCustomerId String   @unique
+  email            String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptions StripeSubscription[]
+  invoices      StripeInvoice[]
+
+  @@map("stripe_customers")
+}
+
+model StripeSubscription {
+  id                   String    @id @default(cuid())
+  stripeSubscriptionId String    @unique
+  stripeCustomerId     String
+  userId               String
+  status               String    // active, canceled, incomplete, past_due, trialing, etc.
+  tier                 String    // free, pro, team, enterprise
+  billingInterval      String?   // month, year
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  canceledAt           DateTime?
+  endedAt              DateTime?
+  quantity             Int       @default(1) // For team subscriptions
+  metadata             Json?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  customer StripeCustomer @relation(fields: [stripeCustomerId], references: [stripeCustomerId], onDelete: Cascade)
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices StripeInvoice[]
+
+  @@map("stripe_subscriptions")
+}
+
+model StripeInvoice {
+  id                 String    @id @default(cuid())
+  stripeInvoiceId    String    @unique
+  stripeCustomerId   String
+  stripeSubscriptionId String?
+  userId             String
+  status             String    // draft, open, paid, void, uncollectible
+  amountDue          Int       // Amount in cents
+  amountPaid         Int       // Amount in cents
+  amountRemaining    Int       // Amount in cents
+  currency           String    @default("usd")
+  description        String?
+  invoiceUrl         String?
+  hostedInvoiceUrl   String?
+  paymentIntentId    String?
+  periodStart        DateTime?
+  periodEnd          DateTime?
+  paidAt             DateTime?
+  dueDate            DateTime?
+  attemptCount       Int       @default(0)
+  metadata           Json?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  customer     StripeCustomer      @relation(fields: [stripeCustomerId], references: [stripeCustomerId], onDelete: Cascade)
+  subscription StripeSubscription? @relation(fields: [stripeSubscriptionId], references: [stripeSubscriptionId], onDelete: SetNull)
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("stripe_invoices")
+}
+
+model StripeWebhookEvent {
+  id            String   @id @default(cuid())
+  stripeEventId String   @unique
+  type          String
+  processed     Boolean  @default(false)
+  processingError String? @db.Text
+  data          Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("stripe_webhook_events")
+}

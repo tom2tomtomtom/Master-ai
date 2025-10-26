@@ -1,0 +1,139 @@
+# Docker Compose configuration for Master-AI SaaS staging environment
+# Use this for local staging environment or alternative deployment platforms
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: master-ai-postgres-staging
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: master_ai_saas_staging
+      POSTGRES_USER: master_ai_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-staging_password_change_me}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./prisma/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5433:5432"
+    networks:
+      - master-ai-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U master_ai_user -d master_ai_saas_staging"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for session storage and caching
+  redis:
+    image: redis:7-alpine
+    container_name: master-ai-redis-staging
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-staging_redis_password}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - master-ai-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Master-AI SaaS Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: master-ai-app-staging
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Application Configuration
+      NODE_ENV: production
+      APP_ENV: staging
+      PORT: 3000
+      
+      # Database Configuration
+      DATABASE_URL: postgresql://master_ai_user:${POSTGRES_PASSWORD:-staging_password_change_me}@postgres:5432/master_ai_saas_staging
+      
+      # Authentication
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-staging-secret-key-change-me-to-secure-random-string}
+      
+      # Stripe Configuration (Test Mode)
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+      
+      # Stripe Price IDs
+      STRIPE_PRO_MONTHLY_PRICE_ID: ${STRIPE_PRO_MONTHLY_PRICE_ID}
+      STRIPE_PRO_ANNUAL_PRICE_ID: ${STRIPE_PRO_ANNUAL_PRICE_ID}
+      STRIPE_TEAM_MONTHLY_PRICE_ID: ${STRIPE_TEAM_MONTHLY_PRICE_ID}
+      STRIPE_TEAM_ANNUAL_PRICE_ID: ${STRIPE_TEAM_ANNUAL_PRICE_ID}
+      
+      # Admin Configuration
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      
+      # Email Configuration
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      
+      # Monitoring
+      SENTRY_DSN: ${SENTRY_DSN}
+      
+      # Public Configuration
+      NEXT_PUBLIC_APP_ENV: staging
+      NEXT_PUBLIC_APP_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    networks:
+      - master-ai-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: master-ai-nginx-staging
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/ssl/certs:ro
+    networks:
+      - master-ai-network
+    profiles:
+      - nginx
+
+# Persistent data volumes
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# Custom network for service communication
+networks:
+  master-ai-network:
+    driver: bridge

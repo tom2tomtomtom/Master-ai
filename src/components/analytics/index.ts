@@ -1,0 +1,1 @@
+export { DiscoveryAnalytics } from './discovery-analytics';

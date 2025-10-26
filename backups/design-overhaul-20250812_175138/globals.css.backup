@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Lesson content text contrast fixes */
+.lesson-text-content {
+  color: #1f2937 !important;
+}
+
+.lesson-text-content p,
+.lesson-text-content div,
+.lesson-text-content span,
+.lesson-text-content li {
+  color: #1f2937 !important;
+}
+
+.lesson-text-content h1,
+.lesson-text-content h2,
+.lesson-text-content h3,
+.lesson-text-content h4,
+.lesson-text-content h5,
+.lesson-text-content h6 {
+  color: #111827 !important;
+  font-weight: 600;
+}
+
+.lesson-text-content blockquote {
+  color: #374151 !important;
+  border-left: 4px solid #d1d5db;
+  padding-left: 1rem;
+  font-style: italic;
+}
+
+.lesson-text-content code {
+  color: #1f2937 !important;
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+.lesson-text-content pre {
+  background-color: #f3f4f6;
+  color: #1f2937 !important;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+.lesson-text-content a {
+  color: #2563eb !important;
+  text-decoration: underline;
+}
+
+.lesson-text-content strong,
+.lesson-text-content b {
+  color: #111827 !important;
+  font-weight: 600;
+}
+
+/* Override any prose styles that might be too light */
+.prose {
+  color: #1f2937 !important;
+}
+
+.prose p {
+  color: #1f2937 !important;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: #111827 !important;
+}
+
+/* Enhanced copy functionality styles */
+.lesson-enhanced-content pre {
+  position: relative;
+  background: #f8f9fa !important;
+  border: 1px solid #e9ecef !important;
+  border-radius: 8px !important;
+  padding: 16px !important;
+  margin-bottom: 16px !important;
+}
+
+.lesson-enhanced-content blockquote {
+  position: relative;
+  background: #f0f9ff !important;
+  border: 1px solid #0ea5e9 !important;
+  border-left-width: 4px !important;
+  padding: 16px !important;
+  border-radius: 8px !important;
+  margin: 16px 0 !important;
+}
+
+.copy-button-wrapper {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+}
+
+.copy-button-wrapper button {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.copy-button-wrapper button:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* Add visual indication that content is copyable */
+.lesson-enhanced-content pre:hover .copy-button-wrapper {
+  opacity: 1;
+}
+
+.lesson-enhanced-content blockquote:hover .copy-button-wrapper {
+  opacity: 1;
+}
